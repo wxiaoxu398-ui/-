@@ -1,0 +1,20 @@
+{
+  "note": "Manually selected passages in the fingerprinted English PDFs. Expected-page recall and PDF mapping are retrieval checks; they do not grade generated medical claims. Page numbers are physical PDF pages, not printed page labels.",
+  "questions": [
+    {"id": 1, "question": "Explain the four stages of pharmacokinetics.", "book": "pharmacology2e", "anchor_page": 33, "anchor": "Pharmacokinetics is the term that describes the four stages", "expected_pages": [33]},
+    {"id": 2, "question": "What is the first-pass effect?", "book": "pharmacology2e", "anchor_page": 37, "anchor": "as the first-pass effect", "expected_pages": [36, 37, 82]},
+    {"id": 3, "question": "What is drug half-life?", "book": "pharmacology2e", "anchor_page": 70, "anchor": "amount of time that it takes for half of the drug", "expected_pages": [52, 70, 182]},
+    {"id": 4, "question": "What happens during external respiration?", "book": "nursingfundamentals", "anchor_page": 546, "anchor": "During external respiration", "expected_pages": [546]},
+    {"id": 5, "question": "What is the purpose of innate immunity?", "book": "nursingfundamentals", "anchor_page": 605, "anchor": "targets invading pathogens in a nonspecific manner", "expected_pages": [605]},
+    {"id": 6, "question": "Which parameters do arterial blood gases measure?", "book": "nursingfundamentals", "anchor_page": 1099, "anchor": "ABGs measure the pH level of the blood", "expected_pages": [1099]},
+    {"id": 7, "question": "How are systolic and diastolic blood pressure defined?", "book": "nursingskills", "anchor_page": 174, "anchor": "The systolic blood pressure is the maximum pressure", "expected_pages": [174]},
+    {"id": 8, "question": "What does the first Korotkoff sound indicate?", "book": "nursingskills", "anchor_page": 192, "anchor": "until the first Korotkoff sound is heard", "expected_pages": [174, 192]},
+    {"id": 9, "question": "How does medical asepsis differ from surgical asepsis?", "book": "nursingskills", "anchor_page": 239, "anchor": "Sterile technique (also called surgical asepsis)", "expected_pages": [239]},
+    {"id": 10, "question": "What is the normal adult respiratory rate?", "book": "nursingskills", "anchor_page": 620, "anchor": "normal range of a respiratory rate for an adult is 12-20", "expected_pages": [85, 620, 1413], "review_note": "The same textbook gives 10-20 on page 85 and 12-20 on pages 620/1413. A generated answer must acknowledge this discrepancy if it uses both passages."}
+  ],
+  "refusal_questions": [
+    "明天的上证指数会涨多少？",
+    "我的账号密码是什么？",
+    "预测下一期彩票中奖号码。"
+  ]
+}

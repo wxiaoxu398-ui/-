@@ -9,11 +9,12 @@ from ..db import engine
 from ..models import Chunk, Document
 
 STOP = set('的 了 是 在 和 与 或 请 问 请问 什么 哪些 如何 为什么 怎么 一个 一种 这个 那个 它 其 呢 吗 中 主要 有 对 根据 教材 解释 简述 分别'.split())
+STOP.update('a an the and or of to in on at by for from with is are was were be been being do does did what which who where when why how can could would should please explain describe define defined tell happens purpose differ indicate'.split())
 cache_lock = threading.Lock()
 
 
 def tokens(text):
-    return [t.lower() for t in jieba.lcut(text) if t.strip() and t not in STOP and re.search(r'[\w\u4e00-\u9fff]', t)]
+    return [t for raw in jieba.lcut(text) if (t := raw.lower().strip()) and t not in STOP and re.search(r'[\w\u4e00-\u9fff]', t)]
 
 
 @lru_cache(maxsize=1)
@@ -27,11 +28,29 @@ def corpus():
 def invalidate():
     with cache_lock:
         corpus.cache_clear()
+        search_index.cache_clear()
+
+
+@lru_cache(maxsize=16)
+def search_index(document_ids=None):
+    rows = [row for row in corpus() if document_ids is None or row[1]['id'] in document_ids]
+    if not rows:
+        return rows, None, []
+    return rows, BM25Okapi([row[2] or ['_'] for row in rows]), [set(row[2]) for row in rows]
+
+
+def warmup():
+    # Build the lexical cache during startup/indexing, before the first question.
+    search_index()
+    if settings.embedding_backend == 'bge' and corpus():
+        from .embedder import embed
+        embed(['教材检索'], query=True)
 
 
 def contextual_query(question, history):
     # Only short/anaphoric follow-ups inherit earlier user questions.
-    followup = re.search(r'^(那|它|其|这些|这个|上述|其中|继续|再)|机制呢|有什么区别|为什么呢', question) or len(tokens(question)) < 2
+    followup = (re.search(r'^(那|它|其|这些|这个|上述|其中|继续|再)|机制呢|有什么区别|为什么呢', question)
+                or re.search(r'\b(it|its|they|their|them|those|these)\b', question, re.I) or len(tokens(question)) < 2)
     if followup:
         prior = [m['content'] for m in history if m['role'] == 'user'][-2:]
         return ' '.join(prior + [question])
@@ -40,16 +59,16 @@ def contextual_query(question, history):
 
 def hybrid_search(question, top_k=6, document_ids=None, history=None):
     query = contextual_query(question, history or [])
-    rows = [row for row in corpus() if document_ids is None or row[1]['id'] in document_ids]
+    rows, bm25, token_sets = search_index(tuple(sorted(set(document_ids))) if document_ids is not None else None)
     if not rows:
         return []
     query_tokens = tokens(query)
     if not query_tokens:
         return []
-    bm25 = BM25Okapi([row[2] or ['_'] for row in rows])
     bm_scores = bm25.get_scores(query_tokens)
     # BM25 IDF can approach zero for small libraries; coverage is a second lexical evidence signal.
-    coverage = [len(set(query_tokens) & set(row[2])) / max(1, len(set(query_tokens))) for row in rows]
+    query_set = set(query_tokens)
+    coverage = [len(query_set & row_tokens) / len(query_set) for row_tokens in token_sets]
     lexical = sorted(range(len(rows)), key=lambda i: (coverage[i], float(bm_scores[i])), reverse=True)[:10]
     lexical = [i for i in lexical if coverage[i] > 0]
     vector_scores = {}
@@ -58,7 +77,7 @@ def hybrid_search(question, top_k=6, document_ids=None, history=None):
         from .embedder import collection, embed
         col = collection()
         if col.count():
-            filters = {'document_id': {'$in': [row[1]['id'] for row in rows]}}
+            filters = {'document_id': {'$in': sorted({row[1]['id'] for row in rows})}}
             result = col.query(query_embeddings=embed([query], query=True), n_results=min(10, col.count()), where=filters, include=['distances', 'metadatas'])
             mapping = {row[0]['id']: i for i, row in enumerate(rows)}
             for meta, distance in zip(result['metadatas'][0], result['distances'][0]):

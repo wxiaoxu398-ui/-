@@ -20,7 +20,7 @@ def messages(conversation_id: int, session: Session = Depends(get_session)):
     if not session.get(Conversation, conversation_id):
         fail(404, 'CONVERSATION_NOT_FOUND', '会话不存在。')
     rows = session.exec(select(Message).where(Message.conversation_id == conversation_id).order_by(Message.id)).all()
-    return {'conversation_id': conversation_id, 'items': [dict(row.model_dump(exclude={'sources_json'}), sources=json.loads(row.sources_json)) for row in rows]}
+    return {'conversation_id': conversation_id, 'items': [dict(row.model_dump(exclude={'sources_json', 'metrics_json'}), sources=json.loads(row.sources_json), metrics=json.loads(row.metrics_json)) for row in rows]}
 
 
 @router.delete('/{conversation_id}')

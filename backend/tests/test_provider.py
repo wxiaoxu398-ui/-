@@ -14,7 +14,8 @@ class ProviderStream:
     async def __anext__(self):
         if not self.chunks: raise StopAsyncIteration
         content, finish = self.chunks.pop(0)
-        return SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=content), finish_reason=finish)])
+        return SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=content), finish_reason=finish)],
+                               usage=getattr(self, 'usage', None) if finish == 'stop' else None)
 
 
 def install_provider(monkeypatch, blocks):
@@ -49,6 +50,26 @@ def test_provider_invalid_claim_never_reaches_frontend(monkeypatch):
     with pytest.raises(ValueError, match='引用'):
         asyncio.run(consume())
     assert exposed == []
+
+
+def test_provider_records_observed_usage_and_price_estimate(monkeypatch):
+    captured, stream = install_provider(monkeypatch, ['测试结论[1]。'])
+    stream.usage = SimpleNamespace(prompt_tokens=1000, completion_tokens=200, total_tokens=1200,
+                                  prompt_cache_hit_tokens=100, prompt_cache_miss_tokens=900)
+    metrics = {}
+    monkeypatch.setattr(settings, 'llm_model', 'deepseek-flash')
+    async def consume():
+        return [block async for block in module.generate('教材问题', [{'index': 1}], [], metrics)]
+    asyncio.run(consume())
+    assert captured['extra_body'] == {'thinking': {'type': 'disabled'}}
+    assert captured['stream_options'] == {'include_usage': True}
+    assert metrics['usage']['total_tokens'] == 1200
+    assert metrics['estimated_cost_cny_peak'] == pytest.approx(0.003404)
+    assert '估算' in metrics['cost_note'] and '账单' in metrics['cost_note']
+    from app.rag.usage import record_usage
+    unknown = {}
+    record_usage(stream.usage, 'custom-model', 'https://example.org', unknown)
+    assert unknown['usage']['total_tokens'] == 1200 and 'estimated_cost_cny_peak' not in unknown
 
 
 def test_provider_failure_is_redacted(monkeypatch):

@@ -17,6 +17,31 @@ state = {'status': 'idle', 'processed': 0, 'total': 0, 'current': '', 'error': '
 seen_files = {}
 
 
+def validate_vector_index():
+    if settings.embedding_backend != 'bge':
+        return
+    from .embedder import collection
+    with Session(engine) as session:
+        changed = False
+        for doc in session.exec(select(Document).where(Document.status == 'ready', Document.indexed_backend == 'bge')).all():
+            try:
+                # count() forces native HNSW loading; metadata-only get() may still
+                # succeed when the persisted vector segment is unreadable.
+                collection().count()
+                present = len(collection().get(where={'document_id': doc.id}, include=[])['ids'])
+            except Exception:
+                logger.exception('Cannot reopen the vector index')
+                present = -1
+            if present != doc.num_chunks:
+                doc.status, doc.error = 'pending', '向量索引不可用或位置已迁移，请重新建立索引。'
+                session.add(doc)
+                changed = True
+        session.commit()
+    if changed:
+        from .retrieve import invalidate
+        invalidate()
+
+
 def file_hash(path: Path):
     digest = hashlib.sha256()
     with path.open('rb') as handle:
@@ -80,6 +105,10 @@ def ingest_all(rebuild=False):
     failed = []
     try:
         scan_documents()
+        if rebuild and settings.embedding_backend == 'bge':
+            from .embedder import reset_collection
+            reset_collection()
+        validate_vector_index()
         with Session(engine) as session:
             ids = [d.id for d in session.exec(select(Document)).all() if Path(d.file_path).is_file()]
             state.update(status='processing', total=len(ids), processed=0, error='')
@@ -133,8 +162,9 @@ def ingest_all(rebuild=False):
                     session.commit()
                     failed.append(doc.title)
                 state['processed'] += 1
-        from .retrieve import invalidate
+        from .retrieve import invalidate, warmup
         invalidate()
+        warmup()
         state.update(status='failed' if failed else 'complete', current='', error='部分文档入库失败：' + '、'.join(failed) if failed else '')
     except Exception:
         logger.exception('Index task failed')

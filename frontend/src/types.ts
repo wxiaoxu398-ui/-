@@ -34,6 +34,22 @@ export interface Message {
   status: string;
   feedback?: "up" | "down" | null;
   created_at?: string;
+  metrics?: Metrics;
+}
+export interface Metrics {
+  mode?: string;
+  model?: string;
+  first_token_ms?: number | null;
+  duration_ms?: number;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+  estimated_cost_cny_peak?: number;
+  price_snapshot_date?: string;
+  price_source?: string;
+  cost_note?: string;
 }
 export interface Conversation {
   id: number;
@@ -70,4 +86,5 @@ export interface Evaluation {
   first_token_ms?: number;
   duration_ms?: number;
   judgment?: "correct" | "wrong";
+  metrics?: Metrics;
 }

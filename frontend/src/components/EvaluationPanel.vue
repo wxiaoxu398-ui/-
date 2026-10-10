@@ -30,7 +30,10 @@ onMounted(async () => {
   try {
     const questions = await api<{ items: Evaluation[] }>("/evaluation/questions");
     const saved: Evaluation[] = JSON.parse(localStorage.getItem("medrag.evaluation") || "[]");
-    items.value = questions.items.map((q) => ({ ...q, ...saved.find((i) => i.id === q.id) }));
+    items.value = questions.items.map((q) => ({
+      ...q,
+      ...saved.find((i) => i.id === q.id),
+    }));
   } catch (e) {
     error.value = (e as Error).message;
   }
@@ -186,6 +189,12 @@ function download() {
           <small v-if="item.duration_ms" class="muted"
             >首段 {{ item.first_token_ms }} ms · 总耗时 {{ item.duration_ms }} ms</small
           >
+          <small v-if="item.metrics?.usage" class="muted">
+            · {{ item.metrics.usage.total_tokens }} tokens
+            <template v-if="item.metrics.estimated_cost_cny_peak !== undefined">
+              · 高峰单价估算 ¥{{ item.metrics.estimated_cost_cny_peak.toFixed(5) }}（以账单为准）
+            </template>
+          </small>
         </div>
       </article>
     </div>

@@ -86,7 +86,8 @@ export async function openSource(source: {
       }
       await check.body?.cancel();
     }
-    if (popup) popup.location.href = url + `#page=${source.page_start}`;
+    if (popup)
+      popup.location.href = `/api/documents/${source.document_id}/page?hash=${encodeURIComponent(source.file_hash)}&page=${source.page_start}`;
     else throw new Error("请允许本页面打开新窗口后重试。");
   } catch (e) {
     popup?.close();

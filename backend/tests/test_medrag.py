@@ -57,6 +57,21 @@ def test_three_out_of_corpus_questions_are_refused(client):
         assert events[-1][1]['finish_reason'] == 'refused'
 
 
+def test_excerpt_panel_only_lists_returned_excerpts(client, monkeypatch):
+    from app.api import chat
+    candidates = [dict(index=i, title='测试材料', content=f'原文片段 {i}，教材自己的编号[99]。',
+                       page_start=i, page_end=i) for i in range(1, 7)]
+    monkeypatch.setattr(chat, 'hybrid_search', lambda *args: candidates)
+    events = parse_sse(client.post('/api/chat/stream', json={'question': '测试摘录来源'}))
+    sources = next(d['sources'] for e, d in events if e == 'sources')
+    assert [s['index'] for s in sources] == [1, 2, 3]
+    answer = ''.join(d['content'] for e, d in events if e == 'delta')
+    assert all(f'原文片段 {i}' in answer for i in range(1, 4))
+    assert '原文片段 4' not in answer
+    messages = client.get(f"/api/conversations/{events[0][1]['conversation_id']}/messages").json()['items']
+    assert [s['index'] for s in messages[-1]['sources']] == [1, 2, 3]
+
+
 def test_followup_and_persisted_history_feedback_delete(client):
     first = parse_sse(client.post('/api/chat/stream', json={'question': '心肌动作电位'}))
     cid = first[0][1]['conversation_id']
@@ -95,6 +110,19 @@ def test_errors_and_pdf_identity(client):
     assert client.post('/api/documents/upload', files={'file': ('invalid.pdf', b'not a pdf', 'application/pdf')}).status_code == 400
 
 
+def test_source_viewer_renders_requested_physical_page(client):
+    doc = client.get('/api/documents').json()['items'][0]
+    base = f"/api/documents/{doc['id']}/page"
+    viewer = client.get(base, params={'page': 7})
+    assert viewer.status_code == 200 and 'PDF 第 7 页 /' in viewer.text
+    assert '/page/image?page=7' in viewer.text and '打开完整 PDF' in viewer.text
+    image = client.get(base + '/image', params={'page': 7})
+    assert image.status_code == 200 and image.content.startswith(b'\x89PNG\r\n\x1a\n')
+    assert client.get(base, params={'page': 0}).status_code == 400
+    assert client.get(base + '/image', params={'page': doc['num_pages'] + 1}).status_code == 400
+    assert client.get(base, params={'page': 7, 'hash': 'changed'}).status_code == 409
+
+
 def test_broken_and_scanned_pdf_report_failures(client):
     import pymupdf as fitz
     from app.config import settings
@@ -116,13 +144,21 @@ def test_citation_validation_and_page_boundaries():
     assert not valid_block('没有依据的结论。第二结论[1]。', 1)
     assert not valid_block('伪造编号[99]。', 2)
     assert not valid_block('根据我的知识[1]。', 1)
+    assert valid_block('First claim[1]. Second claim[2].', 2)
+    assert not valid_block('Uncited claim. Second claim[1].', 1)
+    assert valid_block('The reported value is 0.5[1].', 1)
     assert valid_block('| 分期 | 说明 |\n| --- | --- |\n| 零期 | 测试结论[1] |', 1)
     assert not valid_block('| 分期 | 说明 |\n| --- | --- |\n| 零期 | 无依据结论 |', 1)
     assert clinical_request('帮我诊断一下')
+    assert clinical_request('I have chest pain. What medicine should I take?')
+    assert not clinical_request('I have a question about pharmacokinetics.')
+    from app.rag.retrieve import tokens
+    assert tokens('What IS the purpose of innate immunity?') == ['innate', 'immunity']
     chunks = list(split_pages(['甲' * 900, '乙' * 900]))
     assert all(c['page_start'] == c['page_end'] for c in chunks)
     assert all('乙' not in c['content'] for c in chunks if c['page_start'] == 1)
     assert '心肌' in contextual_query('它的机制呢？', [{'role': 'user', 'content': '心肌动作电位'}])
+    assert 'pharmacokinetics' in contextual_query('What about its four stages?', [{'role': 'user', 'content': 'Explain pharmacokinetics.'}])
 
 
 def test_evaluation_questions_no_fabricated_accuracy(client):

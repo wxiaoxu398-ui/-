@@ -14,6 +14,10 @@ def configure_sqlite(connection, _):
 
 def init_db():
     SQLModel.metadata.create_all(engine)
+    with engine.begin() as connection:
+        columns = {row[1] for row in connection.exec_driver_sql('PRAGMA table_info(message)')}
+        if 'metrics_json' not in columns:
+            connection.exec_driver_sql("ALTER TABLE message ADD COLUMN metrics_json TEXT NOT NULL DEFAULT '{}'")
 
 
 def get_session():

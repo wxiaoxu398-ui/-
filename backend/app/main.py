@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException
@@ -11,7 +12,7 @@ from .config import settings
 from .db import engine, init_db
 from .models import Document, Chunk, Message
 from .api import documents, conversations, chat, feedback, settings as settings_api, evaluation
-from .rag.ingest import scan_documents, state
+from .rag.ingest import scan_documents, state, validate_vector_index
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,6 +30,10 @@ async def lifespan(app):
             session.add(doc)
         session.commit()
     scan_documents()
+    await asyncio.to_thread(validate_vector_index)
+    from .rag.retrieve import warmup
+    # Readiness is announced after existing indexes and the local model are warm.
+    await asyncio.to_thread(warmup)
     yield
 
 

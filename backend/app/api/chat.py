@@ -57,15 +57,17 @@ async def chat(payload: ChatRequest, request: Request):
         cid, mid = conversation.id, assistant.id
 
     async def stream():
-        answer, sources = '', []
+        answer, sources, metrics = '', [], {}
         status, finish = 'complete', 'stop'
         started, first = time.perf_counter(), None
         try:
             mode = 'deepseek' if settings.llm_api_key else 'extractive'
             yield event('meta', {'conversation_id': cid, 'message_id': mid, 'mode': mode})
             sources = [] if clinical_request(question) else await asyncio.to_thread(hybrid_search, question, payload.top_k, payload.document_ids, history)
+            if mode == 'extractive':
+                sources = sources[:3]
             yield event('sources', {'sources': sources})
-            async for block in generate(question, sources, history):
+            async for block in generate(question, sources, history, metrics):
                 if await request.is_disconnected():
                     status, finish = 'stopped', 'cancelled'
                     break
@@ -91,15 +93,18 @@ async def chat(payload: ChatRequest, request: Request):
             detail = str(exc) if isinstance(exc, (RuntimeError, ValueError)) else '检索或生成失败，请检查本地日志与索引状态。'
             yield event('error', {'code': 'LLM_ERROR', 'message': detail})
         finally:
+            metrics.update(first_token_ms=round((first - started) * 1000) if first else None,
+                           duration_ms=round((time.perf_counter() - started) * 1000))
             # finally executes on AbortController disconnect, keeping partial output and status.
             with Session(engine) as session:
                 saved = session.get(Message, mid)
                 if saved:
                     saved.content, saved.sources_json, saved.status = answer, json.dumps(sources, ensure_ascii=False), status
+                    saved.metrics_json = json.dumps(metrics, ensure_ascii=False)
                     session.add(saved)
                     session.commit()
         yield event('done', {'message_id': mid, 'finish_reason': finish,
                             'first_token_ms': round((first - started) * 1000) if first else None,
-                            'duration_ms': round((time.perf_counter() - started) * 1000)})
+                            'duration_ms': round((time.perf_counter() - started) * 1000), 'metrics': metrics})
 
     return EventSourceResponse(stream(), ping=10, headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})

@@ -3,10 +3,12 @@ import os
 import tempfile
 import threading
 import uuid
+import html
+from urllib.parse import urlencode
 from pathlib import Path
 import pymupdf as fitz
 from fastapi import APIRouter, Depends, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from sqlmodel import Session, select
 from ..config import settings
 from ..db import get_session
@@ -107,6 +109,11 @@ def metadata(document_id: int, payload: MetadataRequest, session: Session = Depe
 
 @router.api_route('/{document_id}/file', methods=['GET', 'HEAD'])
 def original_file(document_id: int, hash: str | None = None, session: Session = Depends(get_session)):
+    _, path = original_path(document_id, hash, session)
+    return FileResponse(path, media_type='application/pdf', filename=path.name, content_disposition_type='inline')
+
+
+def original_path(document_id, hash, session):
     doc = session.get(Document, document_id)
     if not doc:
         fail(404, 'DOC_NOT_FOUND', '文档不存在。')
@@ -115,4 +122,47 @@ def original_file(document_id: int, hash: str | None = None, session: Session = 
         fail(404, 'PDF_NOT_FOUND', '原始 PDF 已移走，无法打开。')
     if hash and file_hash(path) != hash:
         fail(409, 'PDF_CHANGED', '原始 PDF 已替换，历史引用页码无法核验；保存的原文摘录仍可查看。')
-    return FileResponse(path, media_type='application/pdf', filename=path.name, content_disposition_type='inline')
+    return doc, path
+
+
+@router.get('/{document_id}/page/image')
+def original_page_image(document_id: int, page: int, hash: str | None = None, session: Session = Depends(get_session)):
+    _, path = original_path(document_id, hash, session)
+    with fitz.open(path) as pdf:
+        if not 1 <= page <= len(pdf):
+            fail(400, 'INVALID_PAGE', '这个物理页码不在 PDF 范围内。')
+        original = pdf[page - 1]
+        scale = min(2, 2400 / max(original.rect.width, original.rect.height))
+        image = original.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False).tobytes('png')
+    return Response(image, media_type='image/png', headers={'Cache-Control': 'private, no-store'})
+
+
+@router.get('/{document_id}/page', response_class=HTMLResponse)
+def original_page(document_id: int, page: int, hash: str | None = None, session: Session = Depends(get_session)):
+    doc, path = original_path(document_id, hash, session)
+    with fitz.open(path) as pdf:
+        total = len(pdf)
+    if not 1 <= page <= total:
+        fail(400, 'INVALID_PAGE', '这个物理页码不在 PDF 范围内。')
+    base = f'/api/documents/{document_id}'
+    fingerprint = {'hash': hash} if hash else {}
+    def page_url(number):
+        return html.escape(base + '/page?' + urlencode(dict(fingerprint, page=number)), quote=True)
+    image_url = html.escape(base + '/page/image?' + urlencode(dict(fingerprint, page=page)), quote=True)
+    pdf_url = html.escape(base + '/file?' + urlencode(fingerprint) + f'#page={page}', quote=True)
+    previous = f'<a href="{page_url(page - 1)}">上一页</a>' if page > 1 else '<span>上一页</span>'
+    following = f'<a href="{page_url(page + 1)}">下一页</a>' if page < total else '<span>下一页</span>'
+    title = html.escape(doc.title)
+    provenance = html.escape(f'{doc.source} · {doc.license}')
+    # Render the original physical page explicitly: native PDF viewers may ignore #page.
+    return HTMLResponse(f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} · PDF 第 {page} 页</title>
+<style>body{{margin:0;background:#f3f4f1;color:#223c34;font:15px system-ui,sans-serif}}
+header{{position:sticky;top:0;background:#fffef9;padding:16px 24px;border-bottom:1px solid #dce2db;display:flex;gap:16px;align-items:center;flex-wrap:wrap}}
+h1{{font-size:17px;margin:0;flex:1}}nav{{display:flex;gap:16px;align-items:center}}a{{color:#2d6b50}}nav span{{color:#929b95}}
+main{{max-width:1100px;margin:24px auto;padding:0 16px}}img{{display:block;width:100%;height:auto;background:white;box-shadow:0 2px 12px #0001}}
+footer{{padding:20px 0;color:#53655c;font-size:13px;overflow-wrap:anywhere}}</style></head><body>
+<header><h1>{title}</h1><strong>PDF 第 {page} 页 / {total} 页</strong><nav>{previous}{following}
+<a href="{pdf_url}" target="_blank" rel="noopener">打开完整 PDF</a></nav></header>
+<main><img src="{image_url}" alt="{title}，PDF 物理页 {page}"><footer>{provenance}<br>
+本工具仅供医学学习参考，不构成医疗建议。页码为 PDF 物理页，可能与书内印刷页码不同。</footer></main></body></html>''')

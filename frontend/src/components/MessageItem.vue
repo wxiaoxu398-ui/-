@@ -5,7 +5,11 @@ import hljs from "highlight.js/lib/common";
 import { BookOpen, Copy, ThumbsUp, ThumbsDown, Check, AlertCircle } from "lucide-vue-next";
 import { ref } from "vue";
 import type { Message } from "../types";
-const props = defineProps<{ message: Message; selected: boolean; mode: string }>();
+const props = defineProps<{
+  message: Message;
+  selected: boolean;
+  mode: string;
+}>();
 const emit = defineEmits<{
   select: [];
   citation: [index: number];
@@ -71,7 +75,10 @@ async function copy() {
     <div class="assistant-avatar"><BookOpen :size="17" /></div>
     <div class="answer-body">
       <div class="answer-byline">
-        <strong>MedRAG</strong><span>{{ mode }}</span
+        <strong>MedRAG</strong
+        ><span>{{
+          message.metrics?.mode === "extractive" ? "原文摘录模式" : message.metrics?.model || mode
+        }}</span
         ><span v-if="message.status === 'generating'" class="generating-dot">正在查阅资料</span>
       </div>
       <div v-if="message.content" class="markdown" v-html="rendered" @click="click"></div>
@@ -118,6 +125,13 @@ async function copy() {
           <ThumbsDown :size="15" />
         </button>
       </div>
+      <small v-if="message.metrics?.usage" class="muted">
+        {{ message.metrics.usage.total_tokens }} tokens
+        <template v-if="message.metrics.estimated_cost_cny_peak !== undefined">
+          · 高峰单价估算 ¥{{ message.metrics.estimated_cost_cny_peak.toFixed(5) }}
+          <span :title="message.metrics.cost_note">（以账单为准）</span>
+        </template>
+      </small>
     </div>
   </article>
 </template>

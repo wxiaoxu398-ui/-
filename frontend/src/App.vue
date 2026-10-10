@@ -56,11 +56,18 @@ const settingsOpen = ref(false),
   saving = ref(false),
   uploading = ref(false),
   notice = ref("");
-const editing = ref({ id: 0, title: "", author: "", source: "", license: "", source_url: "" });
+const editing = ref({
+  id: 0,
+  title: "",
+  author: "",
+  source: "",
+  license: "",
+  source_url: "",
+});
 const config = ref({
   api_key: "",
   clear_api_key: false,
-  llm_model: "deepseek-chat",
+  llm_model: "deepseek-flash",
   embedding_backend: "bge",
   similarity_threshold: 0.35,
   llm_configured: false,
@@ -74,7 +81,7 @@ const indexing = computed(() => store.task?.status === "processing");
 const activeTitle = computed(
   () => store.conversations.find((c) => c.id === store.activeId)?.title || "新的学习会话",
 );
-const suggestions = [
+const defaultSuggestions = [
   {
     icon: BookOpen,
     title: "理解一个概念",
@@ -94,6 +101,28 @@ const suggestions = [
     tag: "对比学习",
   },
 ];
+const openRNLibrary = computed(() =>
+  ["NBK595000", "NBK610815", "NBK596735"].every((id) =>
+    store.documents.some((document) => document.source_url.includes(id)),
+  ),
+);
+const suggestions = computed(() =>
+  openRNLibrary.value
+    ? [
+        { ...defaultSuggestions[0], question: "药代动力学 pharmacokinetics 包含哪些阶段？" },
+        {
+          ...defaultSuggestions[1],
+          title: "理解气体交换",
+          question: "外呼吸 external respiration 时，气体在哪里交换？",
+          tag: "基础生理",
+        },
+        {
+          ...defaultSuggestions[2],
+          question: "听到第一个 Korotkoff 声时记录的是哪种血压？",
+        },
+      ]
+    : defaultSuggestions,
+);
 let timer: number | undefined, noticeTimer: number | undefined;
 function notify(text: string) {
   notice.value = text;
@@ -222,7 +251,10 @@ async function saveSettings() {
   saving.value = true;
   const old = store.health?.embedding_backend;
   try {
-    await api("/settings", { method: "POST", body: JSON.stringify(config.value) });
+    await api("/settings", {
+      method: "POST",
+      body: JSON.stringify(config.value),
+    });
     config.value.api_key = "";
     await store.refresh();
     settingsOpen.value = false;
@@ -365,7 +397,9 @@ async function feedback(message: Message, rating: "up" | "down") {
                 </button>
                 <button
                   class="document-check"
-                  :class="{ checked: store.selectedDocuments?.includes(doc.id) }"
+                  :class="{
+                    checked: store.selectedDocuments?.includes(doc.id),
+                  }"
                   :aria-label="`只检索 ${doc.title}`"
                   :aria-pressed="store.selectedDocuments?.includes(doc.id) || false"
                   @click="filterDoc(doc.id)"
@@ -417,7 +451,9 @@ async function feedback(message: Message, rating: "up" | "down") {
                 {{ store.task?.current || "正在准备" }}
               </p>
             </div>
-            <p v-if="store.task?.error" class="index-error">{{ store.task.error }}</p>
+            <p v-if="store.task?.error" class="index-error">
+              {{ store.task.error }}
+            </p>
           </section>
           <section class="history-section">
             <div class="section-title"><span>最近会话</span><MessageSquare :size="13" /></div>
@@ -476,7 +512,9 @@ async function feedback(message: Message, rating: "up" | "down") {
               }}</strong>
             </div>
             <div class="header-controls">
-              <span class="model-badge"><i></i>{{ store.health?.llm_model || "DeepSeek" }}</span
+              <span class="model-badge"
+                ><i></i
+                >{{ store.health?.llm_configured ? store.health.llm_model : "原文摘录" }}</span
               ><button
                 v-if="view === 'chat'"
                 class="icon-button"
@@ -526,14 +564,18 @@ async function feedback(message: Message, rating: "up" | "down") {
                   <span class="step-icon"><Upload :size="16" /></span>
                   <p>
                     <strong>{{
-                      store.documents.length
-                        ? "教材准备好后，建立索引即可提问"
-                        : "先导入教材，开启有依据的学习"
+                      store.health?.num_ready
+                        ? "教材已入库，试着问一个问题"
+                        : store.documents.length
+                          ? "教材准备好后，建立索引即可提问"
+                          : "先导入教材，开启有依据的学习"
                     }}</strong
                     ><small>{{
-                      store.documents.length
-                        ? "点击左侧书名，补充资料来源与许可证。"
-                        : "支持文字版 PDF · 资料来源与许可证可逐本填写"
+                      openRNLibrary
+                        ? "示例教材为英文，提问时可保留英文医学术语。"
+                        : store.documents.length
+                          ? "点击左侧书名，补充资料来源与许可证。"
+                          : "支持文字版 PDF · 资料来源与许可证可逐本填写"
                     }}</small>
                   </p>
                   <button
@@ -627,7 +669,7 @@ async function feedback(message: Message, rating: "up" | "down") {
           <footer class="main-footer">
             <span
               >MedRAG <b>v{{ store.health?.version || "1.0.0" }}</b></span
-            ><span>为学习而构建 <i>·</i> 让知识有出处</span
+            ><span>{{ store.health?.llm_model || "deepseek-flash" }} <i>·</i> 医学学习参考</span
             ><span>{{
               store.health?.embedding_backend === "lexical" ? "BM25 轻量检索" : "BGE + BM25"
             }}</span>
@@ -725,7 +767,7 @@ async function feedback(message: Message, rating: "up" | "down") {
               placeholder="sk-…" /></label
           ><label v-if="config.llm_configured" class="checkbox-label"
             ><input v-model="config.clear_api_key" type="checkbox" />清除已保存的密钥</label
-          ><label>模型名称<input v-model="config.llm_model" placeholder="deepseek-chat" /></label
+          ><label>模型名称<input v-model="config.llm_model" placeholder="deepseek-flash" /></label
           ><label
             >本地检索方式<select v-model="config.embedding_backend">
               <option value="bge">BGE 向量 + BM25 混合检索</option>

@@ -6,21 +6,29 @@
 
 Windows 双击根目录的 **start-medrag.cmd**。首次运行自动安装依赖、构建页面，然后打开 `http://127.0.0.1:8000/`。再次启动复用已安装依赖。双击 **stop-medrag.cmd** 关闭启动器创建的服务。
 
+双击 **download-demo-books.cmd** 可从 NCBI 官方开放归档下载三本 Open RN 教材，并带上作者、来源、许可证。随后在网页点击“建立文档索引”。当前工作区已下载这三本教材；在其他电脑首次下载约 715 MiB，需保留原书中单独标注的许可例外。书籍清单、PDF 指纹与许可链接保存在 `eval/open-books.json`。
+
 首次使用需要联网，电脑需要 Python 3.11–3.13 与 Node.js 20.19+。在当前 Codex 工作区，启动器也支持使用已安装的 bundled Python。首次 BGE 入库会下载模型，之后使用本地缓存。服务日志位于 `.local/server.log` 和 `.local/server-error.log`。
 
 如果 8000 端口被其他程序占用，启动器会报告失败；请关闭占用程序后重试。
 
 ## 使用
 
-1. 点击文档库的“＋”导入文字版 PDF，或直接把 PDF 放到 `backend/app/data/books/`。单个文件支持到 200 MB；扫描件需先 OCR。
+1. 点击文档库的“＋”导入文字版 PDF，或直接把 PDF 放到 `backend/app/data/books/`。网页上传单个文件最多 200 MiB；更大的 PDF 可直接放入目录。扫描件需先 OCR。
 2. 点击书名填写作者、资料来源、许可证与来源链接。也可在 PDF 旁放同名 JSON，例如 `book.json`，字段为 `title`、`author`、`source`、`license`、`source_url`。
 3. 点击“建立文档索引”。系统逐页解析 PDF，以 480 字为目标、50 字重叠切块，保留物理页码，批量写入 SQLite 与 Chroma。
 4. 在“设置”中填写 DeepSeek API 密钥。密钥仅保存到 `backend/.env`，不会返回给前端或提交到 Git。调用时，问题、最近三轮上下文及检索到的教材片段发送给 DeepSeek。
-5. 提问后点击答案中的编号，在右侧展开原文，或“打开原文”定位 PDF 页码。勾选文档右侧方框可限定检索范围，“全部教材”恢复全库。
+5. 提问后点击答案中的编号，在右侧展开原文，或“打开原文”查看指定物理页的原页预览；预览中可翻页、打开完整 PDF。勾选文档右侧方框可限定检索范围，“全部教材”恢复全库。
+
+默认生成模型为 `deepseek-flash`，显式关闭思考模式，默认最多生成 600 tokens。旧 `.env` 中的 `deepseek-chat` / `deepseek-reasoner` 自动转换为当前模型；这些旧 API 名称已由 DeepSeek 于 2026-07-24 停用。[官方变更说明](https://api-docs.deepseek.com/news/news260424/)
 
 **未配置密钥时使用“原文摘录模式”。** 此时仅展示检索原句和页码，不生成解释，不能作为 DeepSeek 回答质量的验收结果。
 
 默认使用 `BAAI/bge-small-zh-v1.5` + BM25 + RRF。设置中可切换为明确标注的 BM25 轻量模式。切换检索方式必须重新入库，旧方式的索引不参与检索。为减少弱语义误命中，向量候选还需与查询共享至少一个有效词；这会保守地拒绝部分同义或跨语言问题。当前模型主要面向中文教材。
+
+Windows 中项目路径包含中文时，原生 HNSW 文件自动保存到 `%LOCALAPPDATA%/MedRAG/vector-cache/<路径指纹>/`，避免中文路径下索引无法落盘。SQLite、书籍与会话仍在项目目录。启动时检查向量完整性并预热检索缓存；索引丢失或迁移后，文档改为待入库并提示重建。不要在后台运行额外进程修改同一个向量目录。
+
+CPU 嵌入默认使用 4 个计算线程，避免入库时占满处理器。三本示例教材都是英文；已核对三个带英文医学术语的中文问题可命中原页，例如“药代动力学 pharmacokinetics 包含哪些阶段？”。纯中文跨语言问题仍可能保守拒答。
 
 ## 已实现的范围
 
@@ -47,11 +55,14 @@ Windows 双击根目录的 **start-medrag.cmd**。首次运行自动安装依赖
 
 当前工作区已验证：
 
-- 15 项后端自动化测试，包括三本独立测试 PDF、一本 500 页、10 个预设内容/页码、3 个教材外拒答、追问、持久化、反馈、删除、网页上传、非法 PDF、扫描件、原文件移走后缓存失效、生成引用校验与中断。
+- 19 项后端自动化测试，包括三本独立测试 PDF、一本 500 页、10 个预设内容/页码、3 个教材外拒答、追问、持久化、反馈、删除、网页上传、非法 PDF、扫描件、原文件移走后缓存失效、生成引用校验、中断、token 用量记录、旧数据库迁移及指定物理页预览。
 - 真实 BGE 模型加载及 Chroma 入库 smoke test；测试材料为软件夹具，不是正式医学教材。
 - Vue TypeScript 与生产构建；浏览器中的桌面/移动布局、空库拒答与刷新后会话保留。
+- 三本完整 Open RN 英文教材：965、1,499、1,432 页，共 12,978 个片段。10 个英文问题的预期页召回率为 100%；混合检索首条预期页命中 80%，BM25 为 90%。60 条混合检索来源逐条核对文件指纹、物理页与原文映射。3 个教材外问题及追问检索通过。详细记录见 `docs/04-验收记录.md`。
 
-**当前未导入用户的真实教材，也未配置 DeepSeek 密钥。** 尚未验证真实教材引用正确率 ≥80%、多轮生成质量、首段 <3 秒、完整回答 <30 秒、每次 <0.01 元。API 费用依赖实际模型定价和 token 使用，应用不显示估算值作为已测成本。
+**当前仍未配置 DeepSeek 密钥。** 真实资料的检索与页码映射已经验证；尚未验证生成答案引用准确率 ≥80%、多轮生成质量、首段 <3 秒、完整回答 <30 秒、每次 <0.01 元。此次基准使用英文问题，不能证明纯中文跨语言检索质量。
+
+API 返回的 token 用量随会话保存、随评估导出。费用栏标明“高峰单价估算”，按 2026-10-11 [官方人民币价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)快照计算，未知模型或未返回用量时不估算；它不能代替实际账单。停止或失败的流可能不返回最终用量，此时费用保持未知。
 
 ## 开发与测试
 
@@ -60,6 +71,12 @@ Windows 双击根目录的 **start-medrag.cmd**。首次运行自动安装依赖
 .venv\Scripts\python.exe -m pip install -r backend/requirements-dev.txt
 .venv\Scripts\python.exe -m pytest backend/tests -q
 .venv\Scripts\python.exe scripts/verify_bge.py
+.venv\Scripts\python.exe scripts/download_open_books.py
+.venv\Scripts\python.exe scripts/verify_real_corpus.py
+.venv\Scripts\python.exe scripts/verify_real_corpus.py --backend lexical
+.venv\Scripts\python.exe scripts/verify_persistence.py
+# 在网页设置中填写密钥后，运行实际生成验收；答案仍需逐条人工标注
+.venv\Scripts\python.exe scripts/verify_real_corpus.py --live
 
 # 开发后端
 cd backend
@@ -72,6 +89,8 @@ npm run dev
 ```
 
 自动化测试在系统临时目录使用单独数据库与 PDF，不会污染正式文档库、会话或密钥。`verify_bge.py` 会使用本地 BGE 缓存，首次可能下载模型。
+
+真实教材验收使用 `.local/acceptance/` 的单独数据库、文档副本和向量缓存。`open-book-questions.json` 固定独立核对的原页，不从检索结果自动生成答案标准。运行报告包含所有来源、耗时及未标注的回答；完整报告不提交 Git，仅提交不含全文片段的基准摘要。
 
 API OpenAPI 文档：`http://127.0.0.1:8000/docs`。原始接口与技术输入保存在 `docs/`。所有扩展接口使用 `/api` 前缀；统一错误对象为 `{ "error": { "code": "…", "message": "…" } }`。
 

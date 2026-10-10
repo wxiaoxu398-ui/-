@@ -47,6 +47,7 @@ class Message(SQLModel, table=True):
     role: str
     content: str = ''
     sources_json: str = '[]'
+    metrics_json: str = '{}'
     status: str = 'complete'
     feedback: str | None = None
     created_at: str = Field(default_factory=now)

@@ -1,9 +1,13 @@
 from functools import lru_cache
 from ..config import settings
+from .storage import vector_storage_path
 
 
 @lru_cache(maxsize=1)
 def model():
+    if settings.embedding_device == 'cpu':
+        import torch
+        torch.set_num_threads(settings.embedding_cpu_threads)
     from sentence_transformers import SentenceTransformer
     return SentenceTransformer(settings.embedding_model, device=settings.embedding_device,
                                cache_folder=str(settings.model_cache_dir), trust_remote_code=False)
@@ -16,11 +20,25 @@ def embed(texts: list[str], query=False):
 
 
 @lru_cache(maxsize=1)
-def collection():
+def client():
     import chromadb
     from chromadb.config import Settings
-    client = chromadb.PersistentClient(path=str(settings.chroma_dir), settings=Settings(anonymized_telemetry=False))
-    return client.get_or_create_collection('med_chunks', metadata={'hnsw:space': 'cosine'}, embedding_function=None)
+    return chromadb.PersistentClient(path=str(vector_storage_path(settings.chroma_dir)), settings=Settings(anonymized_telemetry=False))
+
+
+@lru_cache(maxsize=1)
+def collection():
+    return client().get_or_create_collection('med_chunks', metadata={'hnsw:space': 'cosine'}, embedding_function=None)
+
+
+def reset_collection():
+    import chromadb.errors
+    collection.cache_clear()
+    try:
+        client().delete_collection('med_chunks')
+    except chromadb.errors.NotFoundError:
+        pass
+    collection()
 
 
 def delete_document(document_id: int):

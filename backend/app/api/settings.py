@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from dotenv import set_key
-from ..config import settings, ROOT
+from ..config import settings, ROOT, current_model
 from ..errors import fail
 from ..rag.ingest import index_lock
 from ..db import engine
@@ -14,7 +14,7 @@ router = APIRouter(prefix='/api/settings', tags=['settings'])
 class SettingsRequest(BaseModel):
     api_key: str = Field(default='', max_length=500)
     clear_api_key: bool = False
-    llm_model: str = Field(default='deepseek-chat', min_length=1, max_length=100)
+    llm_model: str = Field(default='deepseek-flash', min_length=1, max_length=100)
     embedding_backend: str = 'bge'
     similarity_threshold: float = Field(default=0.35, ge=0.1, le=0.95)
 
@@ -31,6 +31,8 @@ def save_settings(payload: SettingsRequest):
         fail(409, 'INDEX_BUSY', '请等入库完成后修改设置。')
     if payload.embedding_backend not in ('bge', 'lexical'):
         fail(400, 'INVALID_BACKEND', '检索模式无效。')
+    if not payload.llm_model.strip():
+        fail(400, 'INVALID_MODEL', '模型名称不能为空。')
     with Session(engine) as session:
         if session.exec(select(Message).where(Message.status == 'generating')).first():
             fail(409, 'CHAT_BUSY', '请先停止生成，再修改设置。')
@@ -40,7 +42,7 @@ def save_settings(payload: SettingsRequest):
                 session.add(doc)
             session.commit()
     env = ROOT / '.env'
-    values = {'LLM_MODEL': payload.llm_model.strip(), 'EMBEDDING_BACKEND': payload.embedding_backend,
+    values = {'LLM_MODEL': current_model(payload.llm_model), 'EMBEDDING_BACKEND': payload.embedding_backend,
               'SIMILARITY_THRESHOLD': str(payload.similarity_threshold)}
     if payload.clear_api_key:
         values['LLM_API_KEY'] = ''

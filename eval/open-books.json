@@ -1,0 +1,52 @@
+{
+  "source": "NCBI NLM LitArch Open Access Subset",
+  "download_policy": "https://www.ncbi.nlm.nih.gov/sites/books/about/ftp/",
+  "checked_at": "2026-10-10",
+  "books": [
+    {
+      "id": "pharmacology2e",
+      "title": "Nursing Pharmacology 2e",
+      "author": "Kimberly Ernstmeyer; Elizabeth Christman (editors)",
+      "source": "Open RN / Chippewa Valley Technical College / NCBI Bookshelf",
+      "source_url": "https://www.ncbi.nlm.nih.gov/books/NBK595000/",
+      "publisher_url": "https://wtcs.pressbooks.pub/pharmacology2e/",
+      "license": "CC BY 4.0, except where otherwise noted",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "archive_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/dc/08/openrnnp_NBK595000.tar.gz",
+      "archive_member": "openrnnp_NBK595000/TOC.pdf",
+      "pdf_name": "pharmacology2e.pdf",
+      "pages": 965,
+      "sha256": "31a25bfc83a21292dcd8d49410b352edb7625b175a49a00f10dd19fc3e995b1e"
+    },
+    {
+      "id": "nursingfundamentals",
+      "title": "Nursing Fundamentals 2e",
+      "author": "Kimberly Ernstmeyer; Elizabeth Christman (editors)",
+      "source": "Open RN / Chippewa Valley Technical College / NCBI Bookshelf",
+      "source_url": "https://www.ncbi.nlm.nih.gov/books/NBK610815/",
+      "publisher_url": "https://wtcs.pressbooks.pub/nursingfundamentals/",
+      "license": "CC BY 4.0, except where otherwise noted",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "archive_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/2b/5d/openrnnf2e_NBK610815.tar.gz",
+      "archive_member": "openrnnf2e_NBK610815/TOC.pdf",
+      "pdf_name": "nursingfundamentals.pdf",
+      "pages": 1499,
+      "sha256": "49743bf7d5a83fdf484bdf0d08fd2066fe3b1a431eb5cedf2571548387c3b2a0"
+    },
+    {
+      "id": "nursingskills",
+      "title": "Nursing Skills 2e",
+      "author": "Kimberly Ernstmeyer; Elizabeth Christman (editors)",
+      "source": "Open RN / Chippewa Valley Technical College / NCBI Bookshelf",
+      "source_url": "https://www.ncbi.nlm.nih.gov/books/NBK596735/",
+      "publisher_url": "https://wtcs.pressbooks.pub/nursingskills/",
+      "license": "CC BY 4.0, except where otherwise noted",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "archive_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/14/eb/openrnns2e_NBK596735.tar.gz",
+      "archive_member": "openrnns2e_NBK596735/TOC.pdf",
+      "pdf_name": "nursingskills.pdf",
+      "pages": 1432,
+      "sha256": "2ca73a22527f9326d074d006e56992abca75659f4da776f031eed38d751b8cbd"
+    }
+  ]
+}

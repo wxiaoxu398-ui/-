@@ -1,0 +1,707 @@
+{
+  "checked_at": "2026-10-11",
+  "status": "retrieval acceptance only; live DeepSeek and billing acceptance pending",
+  "index_seconds_note": "Incremental validation and warmup for existing ready documents; not a full rebuild duration.",
+  "reports": {
+    "bge": {
+      "index_seconds": 28.45,
+      "documents": [
+        {
+          "title": "Nursing Fundamentals 2e",
+          "num_pages": 1499,
+          "num_chunks": 5343,
+          "file_hash": "49743bf7d5a83fdf484bdf0d08fd2066fe3b1a431eb5cedf2571548387c3b2a0"
+        },
+        {
+          "title": "Nursing Skills 2e",
+          "num_pages": 1432,
+          "num_chunks": 4285,
+          "file_hash": "2ca73a22527f9326d074d006e56992abca75659f4da776f031eed38d751b8cbd"
+        },
+        {
+          "title": "Nursing Pharmacology 2e",
+          "num_pages": 965,
+          "num_chunks": 3350,
+          "file_hash": "31a25bfc83a21292dcd8d49410b352edb7625b175a49a00f10dd19fc3e995b1e"
+        }
+      ],
+      "expected_page_recall": 1.0,
+      "top_page_recall": 0.8,
+      "pdf_mapping_checked": true,
+      "generated_answers": false,
+      "note": "English questions on three complete English textbooks. Expected-page recall is not generated-answer citation accuracy; generated claims require manual review. No LLM latency or cost claim is made by a retrieval-only run.",
+      "questions": [
+        {
+          "id": 1,
+          "retrieval_ms": 487,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 33
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 33
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 33
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 456
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 82
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 1118
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "retrieval_ms": 78,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 37
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 37
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 40
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 42
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 70
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 82
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "retrieval_ms": 78,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 182
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 52
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 52
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 70
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 279
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 53
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "retrieval_ms": 78,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 546
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 546
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 610
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1107
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 631
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 686
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "retrieval_ms": 71,
+          "expected_page_hit": true,
+          "top_page_hit": false,
+          "returned_pages": [
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 692
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 621
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 605
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1479
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 622
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 619
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "retrieval_ms": 85,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1099
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 706
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1099
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 1325
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 555
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 443
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "retrieval_ms": 78,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 174
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 176
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 444
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 175
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 177
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 197
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "retrieval_ms": 75,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 174
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 192
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 178
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 175
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 187
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 578
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "retrieval_ms": 90,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 239
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 263
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 239
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 675
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 661
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1456
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "retrieval_ms": 81,
+          "expected_page_hit": true,
+          "top_page_hit": false,
+          "returned_pages": [
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 361
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 361
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 419
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 620
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 85
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 85
+            }
+          ]
+        }
+      ],
+      "out_of_corpus_refusals": 3,
+      "followup_retrieval_passed": true
+    },
+    "lexical": {
+      "index_seconds": 6.97,
+      "documents": [
+        {
+          "title": "Nursing Fundamentals 2e",
+          "num_pages": 1499,
+          "num_chunks": 5343,
+          "file_hash": "49743bf7d5a83fdf484bdf0d08fd2066fe3b1a431eb5cedf2571548387c3b2a0"
+        },
+        {
+          "title": "Nursing Skills 2e",
+          "num_pages": 1432,
+          "num_chunks": 4285,
+          "file_hash": "2ca73a22527f9326d074d006e56992abca75659f4da776f031eed38d751b8cbd"
+        },
+        {
+          "title": "Nursing Pharmacology 2e",
+          "num_pages": 965,
+          "num_chunks": 3350,
+          "file_hash": "31a25bfc83a21292dcd8d49410b352edb7625b175a49a00f10dd19fc3e995b1e"
+        }
+      ],
+      "expected_page_recall": 1.0,
+      "top_page_recall": 0.9,
+      "pdf_mapping_checked": true,
+      "generated_answers": false,
+      "note": "English questions on three complete English textbooks. Expected-page recall is not generated-answer citation accuracy; generated claims require manual review. No LLM latency or cost claim is made by a retrieval-only run.",
+      "questions": [
+        {
+          "id": 1,
+          "retrieval_ms": 298,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 33
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 33
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 1118
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 722
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 625
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 456
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "retrieval_ms": 18,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 37
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 37
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 42
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 82
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 36
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 69
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "retrieval_ms": 17,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 182
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 52
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 182
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 52
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 70
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 279
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "retrieval_ms": 16,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 546
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 546
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 610
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 631
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 686
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 685
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "retrieval_ms": 13,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 605
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 621
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 692
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1479
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 622
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 619
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "retrieval_ms": 29,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1099
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1099
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 555
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1104
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1126
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 71
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "retrieval_ms": 24,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 174
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 444
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 175
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 197
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 176
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 947
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "retrieval_ms": 17,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 192
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 174
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 187
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 578
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 868
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "retrieval_ms": 22,
+          "expected_page_hit": true,
+          "top_page_hit": false,
+          "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 263
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 239
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 661
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 693
+            },
+            {
+              "title": "Nursing Fundamentals 2e",
+              "page": 1493
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 239
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "retrieval_ms": 24,
+          "expected_page_hit": true,
+          "top_page_hit": true,
+          "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 1413
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 620
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 620
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 361
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 361
+            },
+            {
+              "title": "Nursing Pharmacology 2e",
+              "page": 419
+            }
+          ]
+        }
+      ],
+      "out_of_corpus_refusals": 3,
+      "followup_retrieval_passed": true
+    }
+  }
+}

@@ -1,4 +1,4 @@
-param([switch] $NoBrowser)
+param([switch] $NoBrowser, [switch] $DownloadDemoBooks)
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $localDir = Join-Path $projectRoot '.local'
@@ -46,6 +46,9 @@ try {
     }
     if (-not (Test-Path -LiteralPath (Join-Path $backendDir '.env'))) {
         Copy-Item -LiteralPath (Join-Path $backendDir '.env.example') -Destination (Join-Path $backendDir '.env')
+    }
+    if ($DownloadDemoBooks) {
+        Invoke-Checked $pythonPath @((Join-Path $PSScriptRoot 'download_open_books.py'), '--output', (Join-Path $backendDir 'app\data\books'))
     }
     $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
     if (-not $npmCommand) { throw 'Node.js 20.19+ is required. Install the LTS version from nodejs.org.' }

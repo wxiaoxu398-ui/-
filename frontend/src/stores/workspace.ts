@@ -102,7 +102,13 @@ export const useWorkspace = defineStore("workspace", () => {
       status: "generating",
     };
     messages.value.push(
-      { id: reply.id - 1, role: "user", content: question, sources: [], status: "complete" },
+      {
+        id: reply.id - 1,
+        role: "user",
+        content: question,
+        sources: [],
+        status: "complete",
+      },
       reply,
     );
     selectMessage(reply.id);
@@ -128,8 +134,10 @@ export const useWorkspace = defineStore("workspace", () => {
           }
           if (event === "sources") current.sources = data.sources;
           if (event === "delta") current.content += data.content;
-          if (event === "done")
+          if (event === "done") {
             current.status = data.finish_reason === "error" ? "error" : "complete";
+            current.metrics = data.metrics;
+          }
           if (event === "error") {
             error.value = data.message;
             current.status = "error";
@@ -165,7 +173,10 @@ export const useWorkspace = defineStore("workspace", () => {
     message.feedback = rating;
   }
   async function ingest(rebuild = true) {
-    await api("/documents/ingest", { method: "POST", body: JSON.stringify({ rebuild }) });
+    await api("/documents/ingest", {
+      method: "POST",
+      body: JSON.stringify({ rebuild }),
+    });
     await refresh();
   }
   return {

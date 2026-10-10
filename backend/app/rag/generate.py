@@ -3,12 +3,15 @@ import re
 from openai import AsyncOpenAI
 from ..config import settings
 from .prompts import REFUSAL, SYSTEM, source_prompt
+from .usage import record_usage
 
 
 def clinical_request(question):
     personal = re.search(r'(我|患者|病人|孩子|宝宝|家人|妈妈|爸爸).{0,24}(症状|疼|痛|发烧|发热|血压|血糖|吃药|咳|胸闷|头晕|怀孕)', question)
     action = re.search(r'(给我|给患者|开个|开一|应该|该|建议|帮我).{0,12}(处方|吃什么药|用什么药|用药|诊断|治疗|剂量)|诊断一下|怎么治疗|服用多少|每天吃几|推荐.*药|帮我判断.*病', question)
-    return bool(personal or action)
+    english = (re.search(r'\b(i have|my (child|baby|mother|father))\b.{0,40}\b(pain|fever|cough|symptoms?|rash|dizziness)\b', question, re.I)
+               or re.search(r'\b(diagnose me|prescribe|what (medicine|medication|drug) should i|how much .* should i (take|use)|should i take)\b', question, re.I))
+    return bool(personal or action or english)
 
 
 def valid_block(block, source_count):
@@ -28,7 +31,7 @@ def valid_block(block, source_count):
         if line.startswith('|') and index + 1 < len(lines) and re.fullmatch(r'[|:\-\s]+', lines[index + 1]):
             continue
         # Inline citations must accompany every sentence, not just the final paragraph.
-        sentences = re.split(r'(?<=[。！？!?])\s*', line)
+        sentences = re.split(r'(?<=[。！？!?])\s*|(?<=[A-Za-z\]])\.(?=\s+[A-Za-z]|$)\s*', line)
         for sentence in sentences:
             if not re.search(r'[\w\u4e00-\u9fff]', re.sub(r'\[\d+\]', '', sentence)):
                 continue
@@ -37,7 +40,9 @@ def valid_block(block, source_count):
     return True
 
 
-async def generate(question, sources, history):
+async def generate(question, sources, history, metrics=None):
+    metrics = metrics if metrics is not None else {}
+    metrics['mode'] = 'deepseek' if settings.llm_api_key else 'extractive'
     if not sources or clinical_request(question):
         yield REFUSAL
         return
@@ -57,9 +62,12 @@ async def generate(question, sources, history):
             stream = await client.chat.completions.create(model=settings.llm_model,
                 messages=[{'role': 'system', 'content': SYSTEM}, *history[-6:],
                           {'role': 'user', 'content': source_prompt(question, sources)}],
-                temperature=settings.llm_temperature, max_tokens=settings.llm_max_tokens, stream=True)
+                temperature=settings.llm_temperature, max_tokens=settings.llm_max_tokens, stream=True,
+                stream_options={'include_usage': True}, extra_body={'thinking': {'type': 'disabled'}})
             async with stream:
                 async for event in stream:
+                    if getattr(event, 'usage', None):
+                        record_usage(event.usage, getattr(event, 'model', None) or settings.llm_model, settings.llm_base_url, metrics)
                     if event.choices:
                         choice = event.choices[0]
                         pending += choice.delta.content or ''

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 from ..errors import fail
+from ..config import settings
 from ..rag.ingest import index_lock
 from ..rag.retrieve import hybrid_search
 from ..rag.generate import generate
@@ -36,17 +37,19 @@ async def run(payload: EvaluationRequest, request: Request):
             if await request.is_disconnected():
                 return
             started, first = time.perf_counter(), None
-            answer, sources, error = '', [], ''
+            answer, sources, error, metrics = '', [], '', {}
             try:
                 sources = await asyncio.to_thread(hybrid_search, item['question'], 6, payload.document_ids)
-                async for block in generate(item['question'], sources, []):
+                if not settings.llm_api_key:
+                    sources = sources[:3]
+                async for block in generate(item['question'], sources, [], metrics):
                     first = first or time.perf_counter()
                     answer += block
             except Exception as exc:
                 error = str(exc) if isinstance(exc, (ValueError, RuntimeError)) else '评估调用失败。'
             result = dict(item, answer=answer, sources=sources, error=error, refused=answer.strip() == REFUSAL,
                           first_token_ms=round((first - started) * 1000) if first else None,
-                          duration_ms=round((time.perf_counter() - started) * 1000))
+                          duration_ms=round((time.perf_counter() - started) * 1000), metrics=metrics)
             yield {'event': 'result', 'data': json.dumps(result, ensure_ascii=False)}
         yield {'event': 'done', 'data': '{}'}
 
