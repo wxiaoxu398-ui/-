@@ -55,6 +55,7 @@ const settingsOpen = ref(false),
   deleteTarget = ref<number | null>(null),
   saving = ref(false),
   uploading = ref(false),
+  settingsError = ref(""),
   notice = ref("");
 const editing = ref({
   id: 0,
@@ -177,6 +178,13 @@ watch(
     if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight;
   },
 );
+watch(settingsOpen, (open) => {
+  if (!open) {
+    config.value.api_key = "";
+    config.value.clear_api_key = false;
+    settingsError.value = "";
+  }
+});
 function startChat() {
   view.value = "chat";
   store.newChat();
@@ -265,6 +273,8 @@ async function settings() {
   try {
     const data = await api<typeof config.value>("/settings");
     config.value = { ...data, api_key: "", clear_api_key: false };
+    settingsError.value = "";
+    mobileLibrary.value = false;
     settingsOpen.value = true;
   } catch (e) {
     report(e);
@@ -272,6 +282,7 @@ async function settings() {
 }
 async function saveSettings() {
   saving.value = true;
+  settingsError.value = "";
   const old = store.health?.embedding_backend;
   try {
     await api("/settings", {
@@ -282,10 +293,14 @@ async function saveSettings() {
     await store.refresh();
     settingsOpen.value = false;
     notify(
-      old === config.value.embedding_backend ? "设置已保存" : "检索模式已切换，请重新建立索引。",
+      old !== config.value.embedding_backend
+        ? "检索模式已切换，请重新建立索引。"
+        : store.health?.llm_configured
+          ? "API 配置已保存，可使用 DeepSeek 问答。"
+          : "设置已保存，当前使用原文摘录模式。",
     );
   } catch (e) {
-    report(e);
+    settingsError.value = e instanceof Error ? e.message : String(e);
   } finally {
     saving.value = false;
   }
@@ -535,6 +550,14 @@ async function feedback(message: Message, rating: "up" | "down") {
               }}</strong>
             </div>
             <div class="header-controls">
+              <button
+                class="api-settings-button"
+                :class="{ 'needs-key': store.health && !store.health.llm_configured }"
+                @click="settings"
+              >
+                <Settings :size="14" />
+                {{ store.health?.llm_configured ? "API 设置" : "配置 API Key" }}
+              </button>
               <span class="model-badge"
                 ><i></i
                 >{{ store.health?.llm_configured ? store.health.llm_model : "原文摘录" }}</span
@@ -683,11 +706,12 @@ async function feedback(message: Message, rating: "up" | "down") {
                 </div>
               </div>
               <div class="composer-note">
-                <ShieldCheck :size="12" />{{
-                  store.health?.llm_configured
-                    ? "回答仅基于导入资料，请结合原文核对。"
-                    : "未配置 API 密钥，仅返回原文摘录。可在设置中启用 DeepSeek 问答。"
-                }}
+                <ShieldCheck :size="12" />
+                <span v-if="store.health?.llm_configured">回答仅基于导入资料，请结合原文核对。</span>
+                <template v-else>
+                  <span>未配置 API Key，当前仅显示原文摘录。</span>
+                  <button class="settings-link" @click="settings">配置 DeepSeek</button>
+                </template>
               </div>
             </div>
           </template>
@@ -773,54 +797,72 @@ async function feedback(message: Message, rating: "up" | "down") {
         </aside>
       </div>
       <div v-if="notice" class="toast" role="status"><Check :size="15" />{{ notice }}</div>
+      <!-- Naive UI focus trapping requires a div as each modal root. -->
       <NModal v-model:show="settingsOpen"
-        ><section class="modal-card">
-          <div class="modal-heading">
-            <h2>设置</h2>
-            <button class="icon-button" aria-label="关闭设置" @click="settingsOpen = false">
-              <X :size="19" />
+        ><div
+          class="modal-card api-settings-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="api-settings-title"
+        >
+          <form @submit.prevent="saveSettings">
+            <div class="modal-heading">
+              <h2 id="api-settings-title">DeepSeek API 配置</h2>
+              <button type="button" class="icon-button" aria-label="关闭设置" @click="settingsOpen = false">
+                <X :size="19" />
+              </button>
+            </div>
+            <p class="muted">填写密钥后即可启用教材问答。密钥保存在本机，调用模型时用于连接 DeepSeek。</p>
+            <label for="deepseek-api-key"
+              >DeepSeek API Key
+              <span>{{ config.llm_configured ? "已配置；留空保留原密钥" : "尚未配置" }}</span
+              ><input
+                id="deepseek-api-key"
+                v-model="config.api_key"
+                type="password"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="粘贴 DeepSeek API Key（sk-…）" /></label
+            ><label v-if="config.llm_configured" class="checkbox-label"
+              ><input v-model="config.clear_api_key" type="checkbox" />清除已保存的密钥</label
+            ><label>模型名称<input v-model="config.llm_model" placeholder="deepseek-flash" /></label
+            >
+            <p class="api-key-help">保存后直接生效，无需重启或重建索引。密钥是否有效，将在首次问答时确认。</p>
+            <details class="advanced-settings">
+              <summary>高级设置：本地检索</summary>
+              <label
+                >本地检索方式<select v-model="config.embedding_backend">
+                  <option value="bge">BGE 向量 + BM25 混合检索</option>
+                  <option value="lexical">BM25 轻量模式（无需下载模型）</option>
+                </select></label
+              ><label
+                >向量相似度阈值 <span>{{ config.similarity_threshold }}</span
+                ><input
+                  v-model.number="config.similarity_threshold"
+                  type="range"
+                  min="0.1"
+                  max="0.9"
+                  step="0.05"
+              /></label>
+              <p class="modal-note">
+                切换检索方式后需重建索引。阈值需结合实际教材评估，相关度不代表答案准确率。
+              </p>
+            </details>
+            <div v-if="settingsError" class="error-alert" role="alert">
+              <AlertTriangle :size="15" /><span>{{ settingsError }}</span>
+            </div>
+            <button
+              type="submit"
+              class="primary-button modal-save"
+              :disabled="saving || !config.llm_model.trim()"
+            >
+              {{ saving ? "保存中…" : "保存配置" }}
             </button>
-          </div>
-          <p class="muted">密钥仅保存到本机 backend/.env，回答时发送到 DeepSeek API。</p>
-          <label
-            >DeepSeek API 密钥
-            <span>{{ config.llm_configured ? "已配置；留空保留原密钥" : "尚未配置" }}</span
-            ><input
-              v-model="config.api_key"
-              type="password"
-              autocomplete="off"
-              placeholder="sk-…" /></label
-          ><label v-if="config.llm_configured" class="checkbox-label"
-            ><input v-model="config.clear_api_key" type="checkbox" />清除已保存的密钥</label
-          ><label>模型名称<input v-model="config.llm_model" placeholder="deepseek-flash" /></label
-          ><label
-            >本地检索方式<select v-model="config.embedding_backend">
-              <option value="bge">BGE 向量 + BM25 混合检索</option>
-              <option value="lexical">BM25 轻量模式（无需下载模型）</option>
-            </select></label
-          ><label
-            >向量相似度阈值 <span>{{ config.similarity_threshold }}</span
-            ><input
-              v-model.number="config.similarity_threshold"
-              type="range"
-              min="0.1"
-              max="0.9"
-              step="0.05"
-          /></label>
-          <p class="modal-note">
-            切换检索方式后需重建索引。阈值需结合实际教材评估，相关度不代表答案准确率。
-          </p>
-          <button
-            class="primary-button modal-save"
-            :disabled="saving || !config.llm_model.trim()"
-            @click="saveSettings"
-          >
-            {{ saving ? "保存中…" : "保存设置" }}
-          </button>
-        </section></NModal
+          </form>
+        </div></NModal
       >
       <NModal v-model:show="metadataOpen"
-        ><section class="modal-card">
+        ><div class="modal-card">
           <div class="modal-heading">
             <h2>教材信息</h2>
             <button class="icon-button" aria-label="关闭教材信息" @click="metadataOpen = false">
@@ -850,10 +892,10 @@ async function feedback(message: Message, rating: "up" | "down") {
           >
             保存信息
           </button>
-        </section></NModal
+        </div></NModal
       >
       <NModal v-model:show="helpOpen"
-        ><section class="modal-card help-card">
+        ><div class="modal-card help-card">
           <div class="modal-heading">
             <h2>开始使用 MedRAG</h2>
             <button class="icon-button" aria-label="关闭使用说明" @click="helpOpen = false">
@@ -871,7 +913,7 @@ async function feedback(message: Message, rating: "up" | "down") {
             </li>
             <li>
               <strong>配置密钥，开始提问</strong>
-              <p>在设置中填写 DeepSeek API 密钥。未配置时只展示原文摘录。</p>
+              <p>点击页面右上角“配置 API Key”，填写并保存 DeepSeek 密钥。未配置时只展示原文摘录。</p>
             </li>
             <li>
               <strong>核对引用</strong>
@@ -887,7 +929,7 @@ async function feedback(message: Message, rating: "up" | "down") {
               本工具仅供医学学习，不接收患者资料，不提供诊断、处方或治疗建议。请只导入可合法使用的资料。
             </p>
           </div>
-        </section></NModal
+        </div></NModal
       >
       <NModal
         :show="deleteTarget !== null"
@@ -896,14 +938,14 @@ async function feedback(message: Message, rating: "up" | "down") {
             if (!value) deleteTarget = null;
           }
         "
-        ><section class="modal-card delete-modal">
+        ><div class="modal-card delete-modal">
           <h2>删除这个会话？</h2>
           <p class="muted">该会话的消息与反馈会一并删除。</p>
           <div>
             <button class="secondary-button" @click="deleteTarget = null">保留会话</button
             ><button class="danger-button" @click="remove">删除会话</button>
           </div>
-        </section></NModal
+        </div></NModal
       >
     </div>
   </NConfigProvider>

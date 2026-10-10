@@ -19,7 +19,7 @@ Windows 双击根目录的 **start-medrag.cmd**。首次运行自动安装依赖
 1. 点击文档库的“＋”导入文字版 PDF，或直接把 PDF 放到 `backend/app/data/books/`。网页上传单个文件最多 200 MiB；更大的 PDF 可直接放入目录。扫描件需先 OCR。
 2. 点击书名填写作者、资料来源、许可证与来源链接。也可在 PDF 旁放同名 JSON，例如 `book.json`，字段为 `title`、`author`、`source`、`license`、`source_url`。
 3. 点击“建立文档索引”。系统逐页解析 PDF，以 480 字为目标、50 字重叠切块，保留物理页码，批量写入 SQLite 与 Chroma。
-4. 在“设置”中填写 DeepSeek API 密钥。密钥仅保存到 `backend/.env`，不会返回给前端或提交到 Git。调用时，问题、最近三轮上下文及检索到的教材片段发送给 DeepSeek。
+4. 点击聊天页面右上角“配置 API Key”（已配置时为“API 设置”），填写 DeepSeek API Key 并点击“保存配置”，无需重启或重建索引。输入框下方的“配置 DeepSeek”也可打开配置窗口。密钥仅保存到 `backend/.env`，不会返回给前端或提交到 Git。调用时，问题、最近三轮上下文及检索到的教材片段发送给 DeepSeek。
 5. 提问后点击答案中的编号，在右侧展开原文，或“打开原文”查看指定物理页的原页预览；预览中可翻页、打开完整 PDF。勾选文档右侧方框可限定检索范围，“全部教材”恢复全库。
 
 默认生成模型为 `deepseek-flash`，显式关闭思考模式，默认最多生成 600 tokens。旧 `.env` 中的 `deepseek-chat` / `deepseek-reasoner` 自动转换为当前模型；这些旧 API 名称已由 DeepSeek 于 2026-07-24 停用。[官方变更说明](https://api-docs.deepseek.com/news/news260424/)

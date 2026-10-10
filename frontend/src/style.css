@@ -514,6 +514,8 @@ a {
   min-height: 0;
 }
 .main-header {
+  container-type: inline-size;
+  container-name: chat-header;
   height: 68px;
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -539,7 +541,47 @@ a {
   color: #677a67;
 }
 .header-controls {
-  gap: 17px !important;
+  gap: 10px !important;
+}
+.api-settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid #cddcd1;
+  border-radius: 6px;
+  background: #f2f7f1;
+  color: var(--green);
+  font-size: 12px;
+}
+.api-settings-button.needs-key {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.api-settings-button:hover {
+  filter: brightness(0.94);
+}
+.settings-link {
+  padding: 2px 4px;
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: inherit;
+}
+@container chat-header (max-width: 540px) {
+  .main-header .breadcrumb,
+  .main-header > div:first-child > svg {
+    display: none;
+  }
+}
+@container chat-header (max-width: 360px) {
+  .header-controls .model-badge {
+    display: none;
+  }
 }
 .model-badge {
   border: 1px solid #e0e8da;
@@ -830,6 +872,7 @@ a {
 }
 .composer-note {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 5px;
   justify-content: center;
@@ -1507,7 +1550,8 @@ a {
   font-weight: 550;
   margin: 0;
 }
-.modal-card > p {
+.modal-card > p,
+.api-settings-card form > p {
   font-size: 12px;
   margin: 10px 0 20px;
 }
@@ -1577,6 +1621,30 @@ a {
 .modal-save {
   width: 100%;
   margin-top: 5px;
+}
+.api-settings-card .api-key-help {
+  color: #70816f;
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+.advanced-settings {
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+  font-size: 12px;
+  color: #70816f;
+}
+.advanced-settings summary {
+  cursor: pointer;
+}
+.advanced-settings summary:focus-visible {
+  outline: 2px solid #569484;
+  outline-offset: 3px;
+}
+.advanced-settings .modal-note {
+  margin-bottom: 0;
+}
+.api-settings-card .error-alert {
+  margin: 8px 0 12px;
 }
 .delete-modal > div {
   display: flex;
@@ -2062,7 +2130,7 @@ a {
     padding-left: 13px;
   }
   .composer-note {
-    font-size: 7px;
+    font-size: 10px;
     text-align: center;
     line-height: 1.5;
   }
