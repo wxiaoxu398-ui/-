@@ -1,0 +1,348 @@
+{
+  "checked_at": "2026-10-11",
+  "generated_answers": false,
+  "backend": "bge",
+  "new_pages": 439,
+  "new_chunks": 733,
+  "pdf_mapping_checked": true,
+  "sources_checked": 48,
+  "results": [
+    {
+      "question": "教材如何定义生物安全？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 12
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 82
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 13
+        }
+      ],
+      "duration_ms": 51,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "教材如何定义生物安全？",
+      "scope": "all",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 8
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 12
+        },
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 8
+        }
+      ],
+      "duration_ms": 366,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "剩余风险是什么意思？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 15
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 35
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 33
+        }
+      ],
+      "duration_ms": 33,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "剩余风险是什么意思？",
+      "scope": "all",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 15
+        },
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 9
+        },
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 39
+        }
+      ],
+      "duration_ms": 166,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "风险评估框架包括哪五个步骤？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 13
+        },
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 14
+        },
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 18
+        }
+      ],
+      "duration_ms": 42,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "风险评估框架包括哪五个步骤？",
+      "scope": "all",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 13
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 26
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 24
+        }
+      ],
+      "duration_ms": 104,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "在实验室生物安全中，风险由哪两个要素组成？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 17
+        },
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 14
+        },
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 13
+        }
+      ],
+      "duration_ms": 30,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "在实验室生物安全中，风险由哪两个要素组成？",
+      "scope": "all",
+      "expected_page_hit": false,
+      "sources": [
+        {
+          "book": "who-risk-assessment-zh",
+          "page": 17
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 87
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 91
+        }
+      ],
+      "duration_ms": 111,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "紧密贴合型面罩通过什么方式形成保护屏障？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-ppe-zh",
+          "page": 12
+        },
+        {
+          "book": "who-ppe-zh",
+          "page": 54
+        },
+        {
+          "book": "who-ppe-zh",
+          "page": 51
+        }
+      ],
+      "duration_ms": 41,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "紧密贴合型面罩通过什么方式形成保护屏障？",
+      "scope": "all",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-ppe-zh",
+          "page": 12
+        },
+        {
+          "book": "who-ppe-zh",
+          "page": 54
+        },
+        {
+          "book": "who-ppe-zh",
+          "page": 51
+        }
+      ],
+      "duration_ms": 110,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "肥皂是否一定能够灭活生物因子？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-ppe-zh",
+          "page": 12
+        },
+        {
+          "book": "who-ppe-zh",
+          "page": 10
+        },
+        {
+          "book": "who-ppe-zh",
+          "page": 10
+        }
+      ],
+      "duration_ms": 35,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "肥皂是否一定能够灭活生物因子？",
+      "scope": "all",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-ppe-zh",
+          "page": 12
+        },
+        {
+          "book": "who-lab-biosafety-zh",
+          "page": 75
+        },
+        {
+          "book": "who-ppe-zh",
+          "page": 10
+        }
+      ],
+      "duration_ms": 102,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "压力管理指南如何定义压力？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-stress-guide-zh",
+          "page": 14
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 133
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 7
+        }
+      ],
+      "duration_ms": 40,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "压力管理指南如何定义压力？",
+      "scope": "all",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-stress-guide-zh",
+          "page": 14
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 7
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 133
+        }
+      ],
+      "duration_ms": 163,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "解套和着陆技能练习的目的是什么？",
+      "scope": "book",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-stress-guide-zh",
+          "page": 44
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 45
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 54
+        }
+      ],
+      "duration_ms": 33,
+      "finish_reason": "stop"
+    },
+    {
+      "question": "解套和着陆技能练习的目的是什么？",
+      "scope": "all",
+      "expected_page_hit": true,
+      "sources": [
+        {
+          "book": "who-stress-guide-zh",
+          "page": 44
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 45
+        },
+        {
+          "book": "who-stress-guide-zh",
+          "page": 125
+        }
+      ],
+      "duration_ms": 89,
+      "finish_reason": "stop"
+    }
+  ],
+  "note": "Only local Chinese retrieval and original-page mapping were checked. No DeepSeek generation, clinical advice, cost or generation-latency acceptance."
+}

@@ -4,7 +4,7 @@
   "index_seconds_note": "Incremental validation and warmup for existing ready documents; not a full rebuild duration.",
   "reports": {
     "bge": {
-      "index_seconds": 28.45,
+      "index_seconds": 28.02,
       "documents": [
         {
           "title": "Nursing Fundamentals 2e",
@@ -26,14 +26,14 @@
         }
       ],
       "expected_page_recall": 1.0,
-      "top_page_recall": 0.8,
+      "top_page_recall": 0.9,
       "pdf_mapping_checked": true,
       "generated_answers": false,
       "note": "English questions on three complete English textbooks. Expected-page recall is not generated-answer citation accuracy; generated claims require manual review. No LLM latency or cost claim is made by a retrieval-only run.",
       "questions": [
         {
           "id": 1,
-          "retrieval_ms": 487,
+          "retrieval_ms": 488,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -65,7 +65,7 @@
         },
         {
           "id": 2,
-          "retrieval_ms": 78,
+          "retrieval_ms": 82,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -97,7 +97,7 @@
         },
         {
           "id": 3,
-          "retrieval_ms": 78,
+          "retrieval_ms": 77,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -129,7 +129,7 @@
         },
         {
           "id": 4,
-          "retrieval_ms": 78,
+          "retrieval_ms": 83,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -161,7 +161,7 @@
         },
         {
           "id": 5,
-          "retrieval_ms": 71,
+          "retrieval_ms": 78,
           "expected_page_hit": true,
           "top_page_hit": false,
           "returned_pages": [
@@ -193,7 +193,7 @@
         },
         {
           "id": 6,
-          "retrieval_ms": 85,
+          "retrieval_ms": 97,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -225,7 +225,7 @@
         },
         {
           "id": 7,
-          "retrieval_ms": 78,
+          "retrieval_ms": 93,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -257,7 +257,7 @@
         },
         {
           "id": 8,
-          "retrieval_ms": 75,
+          "retrieval_ms": 88,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -289,7 +289,7 @@
         },
         {
           "id": 9,
-          "retrieval_ms": 90,
+          "retrieval_ms": 89,
           "expected_page_hit": true,
           "top_page_hit": true,
           "returned_pages": [
@@ -321,10 +321,22 @@
         },
         {
           "id": 10,
-          "retrieval_ms": 81,
+          "retrieval_ms": 85,
           "expected_page_hit": true,
-          "top_page_hit": false,
+          "top_page_hit": true,
           "returned_pages": [
+            {
+              "title": "Nursing Skills 2e",
+              "page": 620
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 1413
+            },
+            {
+              "title": "Nursing Skills 2e",
+              "page": 620
+            },
             {
               "title": "Nursing Pharmacology 2e",
               "page": 361
@@ -336,24 +348,13 @@
             {
               "title": "Nursing Pharmacology 2e",
               "page": 419
-            },
-            {
-              "title": "Nursing Skills 2e",
-              "page": 620
-            },
-            {
-              "title": "Nursing Skills 2e",
-              "page": 85
-            },
-            {
-              "title": "Nursing Skills 2e",
-              "page": 85
             }
           ]
         }
       ],
       "out_of_corpus_refusals": 3,
-      "followup_retrieval_passed": true
+      "followup_retrieval_passed": true,
+      "latest_revision_note": "2026-10-11: rerun after Chinese definition and full-token coverage ranking adjustment."
     },
     "lexical": {
       "index_seconds": 6.97,

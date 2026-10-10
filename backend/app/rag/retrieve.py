@@ -57,6 +57,15 @@ def contextual_query(question, history):
     return question
 
 
+def definition_targets(question):
+    targets = []
+    for pattern in (r'(?:什么是|何谓|定义|解释)\s*([^？?。]{2,30})',
+                    r'([\u4e00-\u9fffA-Za-z0-9_-]{2,30}?)(?:是什么意思|的定义|的含义)'):
+        for match in re.finditer(pattern, question):
+            targets.append(match.group(1).strip())
+    return targets
+
+
 def hybrid_search(question, top_k=6, document_ids=None, history=None):
     query = contextual_query(question, history or [])
     rows, bm25, token_sets = search_index(tuple(sorted(set(document_ids))) if document_ids is not None else None)
@@ -69,7 +78,15 @@ def hybrid_search(question, top_k=6, document_ids=None, history=None):
     # BM25 IDF can approach zero for small libraries; coverage is a second lexical evidence signal.
     query_set = set(query_tokens)
     coverage = [len(query_set & row_tokens) / len(query_set) for row_tokens in token_sets]
-    lexical = sorted(range(len(rows)), key=lambda i: (coverage[i], float(bm_scores[i])), reverse=True)[:10]
+    targets = definition_targets(query)
+    definitions = {i for i, row in enumerate(rows) if any(
+        re.search(r'(?:^|\n)\s*' + re.escape(term) + r'\s*[：:]', row[0]['content']) for term in targets)}
+    # Definitions explicitly requested by the reader must not be drowned out by
+    # repeated mentions elsewhere. Longer verbatim queries also carry strong
+    # lexical evidence when every meaningful query token is present.
+    exact_coverage = {i for i, value in enumerate(coverage) if value == 1 and len(query_set) >= 4}
+    preferred = definitions | exact_coverage
+    lexical = sorted(range(len(rows)), key=lambda i: (i in definitions, coverage[i], float(bm_scores[i])), reverse=True)[:10]
     lexical = [i for i in lexical if coverage[i] > 0]
     vector_scores = {}
     vectors = []
@@ -86,7 +103,7 @@ def hybrid_search(question, top_k=6, document_ids=None, history=None):
                     vector_scores[idx] = max(0.0, min(1.0, 1.0 - distance))
                     vectors.append(idx)
     # Refusal uses evidence scores, never the RRF score (which is not similarity).
-    if not (max(vector_scores.values(), default=0) >= settings.similarity_threshold or
+    if not (definitions or max(vector_scores.values(), default=0) >= settings.similarity_threshold or
             (max(coverage, default=0) >= settings.lexical_coverage_threshold and
              (max(bm_scores, default=0) >= settings.bm25_threshold or len(rows) < 10))):
         return []
@@ -95,7 +112,7 @@ def hybrid_search(question, top_k=6, document_ids=None, history=None):
         for rank, idx in enumerate(ranked, 1):
             fused[idx] = fused.get(idx, 0) + 1 / (60 + rank)
     result = []
-    for idx in sorted(fused, key=lambda i: (fused[i], coverage[i], vector_scores.get(i, 0)), reverse=True):
+    for idx in sorted(fused, key=lambda i: (i in preferred, fused[i], coverage[i], vector_scores.get(i, 0)), reverse=True):
         # In a local education tool, require a shared query term even for vector hits.
         # Weak semantic matches alone otherwise surface unrelated pages in repetitive PDFs.
         if coverage[idx] == 0 or (vector_scores.get(idx, 0) < settings.similarity_threshold and coverage[idx] < settings.lexical_coverage_threshold):

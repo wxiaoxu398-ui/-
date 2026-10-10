@@ -1,0 +1,67 @@
+{
+  "checked_at": "2026-10-11",
+  "scope": "中文医学学习手册与心理健康教育资料；不宣称是国内医学本科统编教材。",
+  "download_policy": "从 WHO IRIS 官方公开 PDF 下载，核对 PDF 内许可；保留原书版权、译者及第三方材料声明，不修改原文件。",
+  "books": [
+    {
+      "id": "who-lab-biosafety-zh",
+      "title": "实验室生物安全手册（第四版·中文）",
+      "author": "世界卫生组织",
+      "source": "WHO / 世界卫生组织，2023 中文版",
+      "source_url": "https://iris.who.int/handle/10665/372979",
+      "download_url": "https://iris.who.int/server/api/core/bitstreams/d6d695a5-c863-4e11-a7a5-9e431093dca7/content",
+      "license": "CC BY-NC-SA 3.0 IGO；第三方材料另按原书说明",
+      "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo/",
+      "license_marker": "creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "license_page": 4,
+      "pdf_name": "who-lab-biosafety-zh.pdf",
+      "pages": 102,
+      "sha256": "922ae5de84d21335ec1d20d1c1937f140573657a61ffdf05a434010b1c9f7d0e"
+    },
+    {
+      "id": "who-risk-assessment-zh",
+      "title": "风险评估（实验室生物安全·中文）",
+      "author": "世界卫生组织",
+      "source": "WHO / 世界卫生组织，2023 中文版",
+      "source_url": "https://iris.who.int/handle/10665/372970",
+      "download_url": "https://iris.who.int/server/api/core/bitstreams/1486dcac-8208-4743-b355-fe70f87865d4/content",
+      "license": "CC BY-NC-SA 3.0 IGO；第三方材料另按原书说明",
+      "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo/",
+      "license_marker": "creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "license_page": 4,
+      "pdf_name": "who-risk-assessment-zh.pdf",
+      "pages": 122,
+      "sha256": "95b3a8eb64d866f65e9dd45d6efbb4291d9197a20a72703a99fc15741a5f8808"
+    },
+    {
+      "id": "who-ppe-zh",
+      "title": "个人防护装备（实验室生物安全·中文）",
+      "author": "世界卫生组织",
+      "source": "WHO / 世界卫生组织，2023 中文版",
+      "source_url": "https://iris.who.int/handle/10665/372900",
+      "download_url": "https://iris.who.int/server/api/core/bitstreams/2c5b2818-d0bc-4329-8c63-dfbd3d03aa34/content",
+      "license": "CC BY-NC-SA 3.0 IGO；第三方材料另按原书说明",
+      "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo/",
+      "license_marker": "creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "license_page": 4,
+      "pdf_name": "who-ppe-zh.pdf",
+      "pages": 82,
+      "sha256": "0d5ada6ddffee23a162a92dc7f89945d0a82fd19a236691a2543837a42a5f061"
+    },
+    {
+      "id": "who-stress-guide-zh",
+      "title": "压力之下，择要事为之：图解指南（中文）",
+      "author": "世界卫生组织原著；西安交通大学医学部护理学系译",
+      "source": "WHO IRIS / 西安交通大学医学部护理学系，2020 中文译本",
+      "source_url": "https://iris.who.int/handle/10665/331901",
+      "download_url": "https://iris.who.int/server/api/core/bitstreams/12325ca3-997b-4906-97b4-e57a99318384/content",
+      "license": "中文译本 CC BY-NC-SA 3.0；英文原版 CC BY-NC-SA 3.0 IGO",
+      "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "license_marker": "该中文译本可在CC BY-NC-SA 3.0许可协议下使用",
+      "license_page": 4,
+      "pdf_name": "who-stress-guide-zh.pdf",
+      "pages": 133,
+      "sha256": "6f33dedd82c48369bd2567b4821ae77414062e29774ef976cd67e9661e91dc68"
+    }
+  ]
+}

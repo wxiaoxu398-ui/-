@@ -8,6 +8,8 @@ Windows 双击根目录的 **start-medrag.cmd**。首次运行自动安装依赖
 
 双击 **download-demo-books.cmd** 可从 NCBI 官方开放归档下载三本 Open RN 教材，并带上作者、来源、许可证。随后在网页点击“建立文档索引”。当前工作区已下载这三本教材；在其他电脑首次下载约 715 MiB，需保留原书中单独标注的许可例外。书籍清单、PDF 指纹与许可链接保存在 `eval/open-books.json`。
 
+当前还加入四本中文学习资料：《实验室生物安全手册（第四版）》《风险评估》《个人防护装备》《压力之下，择要事为之：图解指南》，共 439 个 PDF 物理页。前三本是 WHO 专业学习手册，第四本是西安交通大学医学部护理学系翻译的心理健康教育指南；它们不等同于国内医学本科统编教材。逐本许可、官方链接与文件指纹见 `eval/chinese-books.json`。在其他电脑双击 **download-chinese-books.cmd** 可下载、启动服务并增量入库。
+
 首次使用需要联网，电脑需要 Python 3.11–3.13 与 Node.js 20.19+。在当前 Codex 工作区，启动器也支持使用已安装的 bundled Python。首次 BGE 入库会下载模型，之后使用本地缓存。服务日志位于 `.local/server.log` 和 `.local/server-error.log`。
 
 如果 8000 端口被其他程序占用，启动器会报告失败；请关闭占用程序后重试。
@@ -28,7 +30,7 @@ Windows 双击根目录的 **start-medrag.cmd**。首次运行自动安装依赖
 
 Windows 中项目路径包含中文时，原生 HNSW 文件自动保存到 `%LOCALAPPDATA%/MedRAG/vector-cache/<路径指纹>/`，避免中文路径下索引无法落盘。SQLite、书籍与会话仍在项目目录。启动时检查向量完整性并预热检索缓存；索引丢失或迁移后，文档改为待入库并提示重建。不要在后台运行额外进程修改同一个向量目录。
 
-CPU 嵌入默认使用 4 个计算线程，避免入库时占满处理器。三本示例教材都是英文；已核对三个带英文医学术语的中文问题可命中原页，例如“药代动力学 pharmacokinetics 包含哪些阶段？”。纯中文跨语言问题仍可能保守拒答。
+CPU 嵌入默认使用 4 个计算线程，避免入库时占满处理器。原有三本 Open RN 教材为英文；提问时保留英文术语有助于命中，例如“药代动力学 pharmacokinetics 包含哪些阶段？”。新增中文手册可直接中文提问；资料就绪后首页显示其覆盖的中文示例。纯中文跨语言问题仍可能保守拒答。
 
 ## 已实现的范围
 
@@ -55,10 +57,11 @@ CPU 嵌入默认使用 4 个计算线程，避免入库时占满处理器。三�
 
 当前工作区已验证：
 
-- 19 项后端自动化测试，包括三本独立测试 PDF、一本 500 页、10 个预设内容/页码、3 个教材外拒答、追问、持久化、反馈、删除、网页上传、非法 PDF、扫描件、原文件移走后缓存失效、生成引用校验、中断、token 用量记录、旧数据库迁移及指定物理页预览。
+- 20 项后端自动化测试，包括三本独立测试 PDF、一本 500 页、10 个预设内容/页码、3 个教材外拒答、追问、持久化、反馈、删除、网页上传、非法 PDF、扫描件、原文件移走后缓存失效、生成引用校验、中断、token 用量记录、旧数据库迁移、指定物理页预览，以及定义题不被大量术语重复干扰的回归检查。
 - 真实 BGE 模型加载及 Chroma 入库 smoke test；测试材料为软件夹具，不是正式医学教材。
 - Vue TypeScript 与生产构建；浏览器中的桌面/移动布局、空库拒答与刷新后会话保留。
-- 三本完整 Open RN 英文教材：965、1,499、1,432 页，共 12,978 个片段。10 个英文问题的预期页召回率为 100%；混合检索首条预期页命中 80%，BM25 为 90%。60 条混合检索来源逐条核对文件指纹、物理页与原文映射。3 个教材外问题及追问检索通过。详细记录见 `docs/04-验收记录.md`。
+- 三本完整 Open RN 英文教材：965、1,499、1,432 页，共 12,978 个片段。10 个英文问题的预期页召回率为 100%；本次检索排序调整后混合检索首条预期页命中 90%，BM25 原基准为 90%。60 条混合检索来源逐条核对文件指纹、物理页与原文映射。3 个教材外问题及追问检索通过。原基准记录见 `docs/04-验收记录.md`，最新摘要见 `eval/retrieval-benchmark.json`。
+- 新增四本中文学习资料共 439 页、733 个片段；8 个中文问题在指定书内的预期页命中 8/8，全库检索为 7/8。48 条来源的原文与物理页映射核对通过，正式索引在独立进程重新打开及逐书向量查询通过。详细记录见 `docs/05-中文资料入库记录.md`。
 
 **当前仍未配置 DeepSeek 密钥。** 真实资料的检索与页码映射已经验证；尚未验证生成答案引用准确率 ≥80%、多轮生成质量、首段 <3 秒、完整回答 <30 秒、每次 <0.01 元。此次基准使用英文问题，不能证明纯中文跨语言检索质量。
 
@@ -72,6 +75,8 @@ API 返回的 token 用量随会话保存、随评估导出。费用栏标明“
 .venv\Scripts\python.exe -m pytest backend/tests -q
 .venv\Scripts\python.exe scripts/verify_bge.py
 .venv\Scripts\python.exe scripts/download_open_books.py
+.venv\Scripts\python.exe scripts/download_chinese_books.py --output backend/app/data/books
+.venv\Scripts\python.exe scripts/verify_chinese_books.py
 .venv\Scripts\python.exe scripts/verify_real_corpus.py
 .venv\Scripts\python.exe scripts/verify_real_corpus.py --backend lexical
 .venv\Scripts\python.exe scripts/verify_persistence.py

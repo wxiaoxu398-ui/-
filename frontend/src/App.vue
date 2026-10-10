@@ -106,8 +106,31 @@ const openRNLibrary = computed(() =>
     store.documents.some((document) => document.source_url.includes(id)),
   ),
 );
+const chineseManuals = computed(() =>
+  ["10665/372979", "10665/372970", "10665/372900"].every((id) =>
+    store.documents.some((document) => document.status === "ready" && document.source_url.includes(id)),
+  ),
+);
 const suggestions = computed(() =>
-  openRNLibrary.value
+  chineseManuals.value
+    ? [
+        {
+          ...defaultSuggestions[0],
+          title: "理解生物安全",
+          question: "教材如何定义生物安全？",
+        },
+        {
+          ...defaultSuggestions[1],
+          title: "梳理风险评估",
+          question: "风险评估框架包括哪五个步骤？",
+        },
+        {
+          ...defaultSuggestions[2],
+          title: "理解防护装备",
+          question: "紧密贴合型面罩通过什么方式形成保护屏障？",
+        },
+      ]
+    : openRNLibrary.value
     ? [
         { ...defaultSuggestions[0], question: "药代动力学 pharmacokinetics 包含哪些阶段？" },
         {
@@ -571,7 +594,9 @@ async function feedback(message: Message, rating: "up" | "down") {
                           : "先导入教材，开启有依据的学习"
                     }}</strong
                     ><small>{{
-                      openRNLibrary
+                      chineseManuals
+                        ? "中文学习手册已入库，可直接用中文提问。"
+                        : openRNLibrary
                         ? "示例教材为英文，提问时可保留英文医学术语。"
                         : store.documents.length
                           ? "点击左侧书名，补充资料来源与许可证。"

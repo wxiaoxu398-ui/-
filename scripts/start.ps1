@@ -1,4 +1,4 @@
-param([switch] $NoBrowser, [switch] $DownloadDemoBooks)
+param([switch] $NoBrowser, [switch] $DownloadDemoBooks, [switch] $DownloadChineseBooks)
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $localDir = Join-Path $projectRoot '.local'
@@ -11,6 +11,13 @@ function Invoke-Checked {
     param([string] $Executable, [string[]] $Arguments)
     & $Executable @Arguments
     if ($LASTEXITCODE -ne 0) { throw "Command failed: $Executable (exit $LASTEXITCODE)" }
+}
+
+function Start-ChineseIndex {
+    if ($DownloadChineseBooks) {
+        Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/documents/ingest' -Method Post -ContentType 'application/json' -Body '{"rebuild":false}' | Out-Null
+        Write-Host 'Chinese manuals are imported. Incremental indexing progress is shown in the library.'
+    }
 }
 
 try {
@@ -50,6 +57,9 @@ try {
     if ($DownloadDemoBooks) {
         Invoke-Checked $pythonPath @((Join-Path $PSScriptRoot 'download_open_books.py'), '--output', (Join-Path $backendDir 'app\data\books'))
     }
+    if ($DownloadChineseBooks) {
+        Invoke-Checked $pythonPath @((Join-Path $PSScriptRoot 'download_chinese_books.py'), '--output', (Join-Path $backendDir 'app\data\books'))
+    }
     $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
     if (-not $npmCommand) { throw 'Node.js 20.19+ is required. Install the LTS version from nodejs.org.' }
     $buildInputs = @(Get-ChildItem -LiteralPath (Join-Path $frontendDir 'src') -File -Recurse) + @(Get-Item -LiteralPath (Join-Path $frontendDir 'package.json'), (Join-Path $frontendDir 'package-lock.json'), (Join-Path $frontendDir 'index.html'), (Join-Path $frontendDir 'vite.config.ts'), (Join-Path $frontendDir 'tsconfig.json'))
@@ -71,6 +81,7 @@ try {
     $existing = $null
     try { $existing = Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/health' -TimeoutSec 2 } catch {}
     if ($existing -and $existing.version -and $existing.llm_model) {
+        Start-ChineseIndex
         if (-not $NoBrowser) { Start-Process 'http://127.0.0.1:8000/' }
         Write-Host 'MedRAG is already running.'
         exit 0
@@ -85,6 +96,7 @@ try {
         Start-Sleep -Milliseconds 500
     }
     if (-not $ready) { throw 'Local service did not become ready. See .local/server-error.log.' }
+    Start-ChineseIndex
     if (-not $NoBrowser) { Start-Process 'http://127.0.0.1:8000/' }
     Write-Host 'MedRAG is running at http://127.0.0.1:8000. Use stop-medrag.cmd to stop it.'
 } catch {

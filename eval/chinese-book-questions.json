@@ -1,0 +1,13 @@
+{
+  "note": "从原 PDF 独立核对的物理页与原文锚点，用于中文检索检查，不等于生成答案准确率。",
+  "questions": [
+    {"book": "who-lab-biosafety-zh", "question": "教材如何定义生物安全？", "expected_pages": [12], "anchor_page": 12, "anchor": "生物安全：为防止意外暴露于生物因子或防止其意外泄露而实施的防护原则、技术和实践。"},
+    {"book": "who-lab-biosafety-zh", "question": "剩余风险是什么意思？", "expected_pages": [15], "anchor_page": 15, "anchor": "剩余风险：实施精心选择的风险控制措施后，仍然存在的风险。"},
+    {"book": "who-risk-assessment-zh", "question": "风险评估框架包括哪五个步骤？", "expected_pages": [13, 14], "anchor_page": 13, "anchor": "包括基于计划-执行-检查-行动周期的五个步骤或程序"},
+    {"book": "who-risk-assessment-zh", "question": "在实验室生物安全中，风险由哪两个要素组成？", "expected_pages": [10, 13], "anchor_page": 10, "anchor": "风险：事件发生的可能性及其造成危害（后果）的严重程度的组合。"},
+    {"book": "who-ppe-zh", "question": "紧密贴合型面罩通过什么方式形成保护屏障？", "expected_pages": [12], "anchor_page": 12, "anchor": "通过与佩戴者的皮肤形成密封，在其呼吸道和周围空气之间形成保护屏障。"},
+    {"book": "who-ppe-zh", "question": "肥皂是否一定能够灭活生物因子？", "expected_pages": [12], "anchor_page": 12, "anchor": "注意，肥皂不一定能够灭活生物因子。"},
+    {"book": "who-stress-guide-zh", "question": "压力管理指南如何定义压力？", "expected_pages": [14], "anchor_page": 14, "anchor": "压力”是指感觉到生活受到困扰或威胁。"},
+    {"book": "who-stress-guide-zh", "question": "解套和着陆技能练习的目的是什么？", "expected_pages": [45], "anchor_page": 45, "anchor": "解套”和“着陆”技能练习的目的是帮助你“投入”生活。"}
+  ]
+}
