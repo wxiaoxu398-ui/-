@@ -1,0 +1,17 @@
+.venv/
+node_modules/
+frontend/dist/
+__pycache__/
+.pytest_cache/
+*.pyc
+backend/.env
+backend/app/data/*.db*
+backend/app/data/chroma/
+backend/app/data/models/
+backend/app/data/books/*
+!backend/app/data/books/.gitkeep
+eval/results*.json
+*.log
+.tsbuildinfo
+*.tsbuildinfo
+.local/

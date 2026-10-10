@@ -1,0 +1,22 @@
+[
+  {"id":1,"question":"心肌细胞动作电位分几期？","category":"生理学 · 概念","expected_refusal":false},
+  {"id":2,"question":"心肌动作电位平台期的离子机制是什么？","category":"生理学 · 机制","expected_refusal":false},
+  {"id":3,"question":"窦房结细胞的自动节律性如何产生？","category":"生理学 · 机制","expected_refusal":false},
+  {"id":4,"question":"影响心输出量的因素有哪些？","category":"生理学 · 梳理","expected_refusal":false},
+  {"id":5,"question":"肾小球滤过率受哪些因素影响？","category":"生理学 · 梳理","expected_refusal":false},
+  {"id":6,"question":"肾单位由哪些结构组成？","category":"解剖学 · 概念","expected_refusal":false},
+  {"id":7,"question":"肺表面活性物质的作用是什么？","category":"生理学 · 概念","expected_refusal":false},
+  {"id":8,"question":"氧解离曲线右移有哪些影响因素？","category":"生理学 · 梳理","expected_refusal":false},
+  {"id":9,"question":"骨骼肌兴奋收缩耦联的过程是什么？","category":"生理学 · 机制","expected_refusal":false},
+  {"id":10,"question":"突触传递有哪些基本特征？","category":"生理学 · 概念","expected_refusal":false},
+  {"id":11,"question":"先天免疫与适应性免疫的区别是什么？","category":"免疫学 · 对比","expected_refusal":false},
+  {"id":12,"question":"抗体的基本结构是什么？","category":"免疫学 · 概念","expected_refusal":false},
+  {"id":13,"question":"补体系统的主要功能有哪些？","category":"免疫学 · 梳理","expected_refusal":false},
+  {"id":14,"question":"革兰阳性菌与阴性菌细胞壁有何区别？","category":"微生物学 · 对比","expected_refusal":false},
+  {"id":15,"question":"病毒复制的一般步骤有哪些？","category":"微生物学 · 梳理","expected_refusal":false},
+  {"id":16,"question":"细胞凋亡与坏死有哪些区别？","category":"病理学 · 对比","expected_refusal":false},
+  {"id":17,"question":"急性炎症的基本病理变化有哪些？","category":"病理学 · 概念","expected_refusal":false},
+  {"id":18,"question":"明天的上证指数会涨多少？","category":"教材外 · 拒答","expected_refusal":true},
+  {"id":19,"question":"我的账号登录密码是什么？","category":"教材外 · 拒答","expected_refusal":true},
+  {"id":20,"question":"帮我预测下一期彩票中奖号码。","category":"教材外 · 拒答","expected_refusal":true}
+]
