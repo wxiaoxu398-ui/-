@@ -5,6 +5,7 @@ import hljs from "highlight.js/lib/common";
 import { BookOpen, Copy, ThumbsUp, ThumbsDown, Check, AlertCircle } from "lucide-vue-next";
 import { ref } from "vue";
 import type { Message } from "../types";
+import EvidenceTrace from "./EvidenceTrace.vue";
 const props = defineProps<{
   message: Message;
   selected: boolean;
@@ -51,6 +52,13 @@ md.renderer.rules.link_open = (tokens, idx, options, _env, self) => {
   return self.renderToken(tokens, idx, options);
 };
 const rendered = computed(() => md.render(props.message.content));
+const quizCards = computed(() => {
+  if (props.message.metrics?.learning_mode !== "quiz" || props.message.status !== "complete") return [];
+  const pattern = /\*\*自测\s*(\d+)\*\*\s*[：:]([\s\S]*?)\*\*参考答案\*\*\s*[：:]([\s\S]*?)(?=\*\*自测\s*\d+\*\*|$)/g;
+  const matches = [...props.message.content.matchAll(pattern)];
+  if (!matches.length || props.message.content.replace(pattern, "").trim()) return [];
+  return matches.map(match => ({ id: match[1], question: md.render(match[2].trim()), answer: md.render(match[3].trim()) }));
+});
 function click(event: MouseEvent) {
   const button = (event.target as HTMLElement).closest("[data-citation]");
   if (button) emit("citation", Number(button.getAttribute("data-citation")));
@@ -79,9 +87,16 @@ async function copy() {
         ><span>{{
           message.metrics?.mode === "extractive" ? "原文摘录模式" : message.metrics?.model || mode
         }}</span
-        ><span v-if="message.status === 'generating'" class="generating-dot">正在查阅资料</span>
+        ><span v-if="message.metrics?.learning_mode && message.metrics.learning_mode !== 'answer'" class="learning-badge">{{ message.metrics.learning_mode === "quiz" ? "自测练习" : "知识梳理" }}</span>
       </div>
-      <div v-if="message.content" class="markdown" v-html="rendered" @click="click"></div>
+      <EvidenceTrace :message="message" />
+      <div v-if="quizCards.length" class="quiz-cards">
+        <article v-for="card in quizCards" :key="card.id" class="quiz-card">
+          <span>自测 {{ card.id }}</span><div class="markdown" v-html="card.question" @click="click"></div>
+          <details><summary>显示参考答案</summary><div class="markdown" v-html="card.answer" @click="click"></div></details>
+        </article>
+      </div>
+      <div v-else-if="message.content" class="markdown" v-html="rendered" @click="click"></div>
       <div v-else-if="message.status === 'generating'" class="thinking">
         <span></span><span></span><span></span><small>检索原文并核对引用…</small>
       </div>

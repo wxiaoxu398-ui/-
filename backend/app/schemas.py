@@ -7,6 +7,7 @@ class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     document_ids: list[int] | None = None
     top_k: int = Field(default=6, ge=1, le=10)
+    learning_mode: Literal['answer', 'outline', 'quiz'] = 'answer'
 
 
 class IngestRequest(BaseModel):

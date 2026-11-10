@@ -1,3 +1,4 @@
+export type LearningMode = "answer" | "outline" | "quiz";
 export interface Document {
   id: number;
   title: string;
@@ -35,9 +36,14 @@ export interface Message {
   feedback?: "up" | "down" | null;
   created_at?: string;
   metrics?: Metrics;
+  phase?: "retrieving" | "generating" | "refusing";
 }
 export interface Metrics {
   mode?: string;
+  learning_mode?: LearningMode;
+  retrieval_ms?: number;
+  retrieved_sources?: number;
+  validated_blocks?: number;
   model?: string;
   first_token_ms?: number | null;
   duration_ms?: number;
@@ -73,6 +79,8 @@ export interface Health {
   num_chunks: number;
   num_ready: number;
   version: string;
+  num_documents: number;
+  library_revision?: string;
 }
 export interface Evaluation {
   id: number;
@@ -87,4 +95,15 @@ export interface Evaluation {
   duration_ms?: number;
   judgment?: "correct" | "wrong";
   metrics?: Metrics;
+  available?: boolean;
+  expected_pages?: number[];
+  expected_file_hash?: string;
+  book_title?: string;
+  retrieval_hit?: boolean | null;
+}
+export interface EvaluationDataset {
+  id: string;
+  title: string;
+  description: string;
+  count: number;
 }

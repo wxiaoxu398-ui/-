@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-11-10",
+  "reference": "https://www.boxuegu.com/matchTrack/detail/?id=10037",
+  "model": "deepseek-flash",
+  "retrieval": "BGE + BM25 + RRF",
+  "dataset": "zh",
+  "scope": "all documents",
+  "unit_tests_passed": 24,
+  "completed": 11,
+  "generation_errors": 0,
+  "in_book_questions": 8,
+  "retrieval_expected_page_hits": 7,
+  "out_of_scope_refusals": 3,
+  "out_of_scope_questions": 3,
+  "cited_fragments_checked_against_original_pdf": 18,
+  "in_book_first_segment_ms_range": [
+    1044,
+    1519
+  ],
+  "in_book_duration_ms_range": [
+    1238,
+    2158
+  ],
+  "human_reviewed_answers": 0,
+  "semantic_citation_accuracy": null,
+  "limitations": [
+    "Expected page recall is not semantic citation accuracy.",
+    "One initial learning sample took 3094 ms to its first segment; sub-3-second response is not guaranteed.",
+    "File and source mapping checks do not prove medical interpretations correct."
+  ]
+}

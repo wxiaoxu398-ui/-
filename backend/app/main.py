@@ -1,4 +1,6 @@
 import logging
+import hashlib
+import json
 import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -69,6 +71,9 @@ def health():
         docs = session.exec(select(Document)).all()
         chunks = session.exec(select(Chunk.id)).all()
     return {'status': 'ok', 'version': '1.0.0', 'llm_model': settings.llm_model,
+            'library_revision': hashlib.sha256(json.dumps(
+                sorted((doc.id, doc.file_hash, doc.status, doc.num_chunks, doc.indexed_backend) for doc in docs)
+            ).encode()).hexdigest()[:20],
             'llm_configured': bool(settings.llm_api_key), 'answer_mode': 'deepseek' if settings.llm_api_key else 'extractive',
             'embedding_model': settings.embedding_model if settings.embedding_backend == 'bge' else 'BM25（轻量模式）',
             'embedding_backend': settings.embedding_backend, 'num_documents': len(docs), 'num_chunks': len(chunks),

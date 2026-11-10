@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch, defineAsyncComponent } from "vue";
 import { NModal, NConfigProvider } from "naive-ui";
 import {
   BookOpen,
@@ -33,14 +33,24 @@ import {
   Menu,
   LoaderCircle,
   Filter,
+  Download,
+  Presentation,
 } from "lucide-vue-next";
 import MessageItem from "./components/MessageItem.vue";
-import EvaluationPanel from "./components/EvaluationPanel.vue";
+import PanelState from "./components/PanelState.vue";
+const panelOptions = {loadingComponent: PanelState, errorComponent: PanelState, delay: 150, timeout: 12000};
+const EvaluationPanel = defineAsyncComponent({...panelOptions, loader: () => import("./components/EvaluationPanel.vue")});
+const ProjectPanel = defineAsyncComponent({...panelOptions, loader: () => import("./components/ProjectPanel.vue")});
 import { useWorkspace } from "./stores/workspace";
 import { api, openSource } from "./api";
-import type { Document, Source, Message } from "./types";
+import type { Document, Source, Message, LearningMode } from "./types";
+import { conversationMarkdown, downloadText } from "./utils/export";
 const store = useWorkspace();
-const view = ref<"chat" | "evaluation">("chat"),
+type WorkspaceView = "chat" | "evaluation" | "project";
+function currentRoute(): WorkspaceView {
+  return location.hash === "#/evaluation" ? "evaluation" : location.hash === "#/project" ? "project" : "chat";
+}
+const view = ref<WorkspaceView>(currentRoute()),
   prompt = ref(""),
   search = ref(""),
   showSearch = ref(false);
@@ -82,6 +92,29 @@ const indexing = computed(() => store.task?.status === "processing");
 const activeTitle = computed(
   () => store.conversations.find((c) => c.id === store.activeId)?.title || "新的学习会话",
 );
+const learningModes: {id: LearningMode; label: string; hint: string}[] = [
+  {id: "answer", label: "概念讲解", hint: "围绕问题解释，并附教材出处。"},
+  {id: "outline", label: "知识梳理", hint: "把教材内容整理成带引用的复习要点。"},
+  {id: "quiz", label: "自测练习", hint: "根据教材生成两道自测题和可展开的参考答案。"},
+];
+function selectView(target: "chat" | "evaluation" | "project") {
+  if (store.generating) return;
+  view.value = target;
+  mobileLibrary.value = false;
+}
+function routeChanged() {
+  if (store.generating) history.replaceState(null, "", "#/" + (view.value === "chat" ? "" : view.value));
+  else view.value = currentRoute();
+}
+watch(view, next => {
+  const hash = "#/" + (next === "chat" ? "" : next);
+  if (location.hash !== hash) location.hash = hash;
+});
+function exportConversation() {
+  const filename = activeTitle.value.replace(/[\\/:*?"<>|]/g, "_").slice(0, 60);
+  downloadText(filename + ".md", conversationMarkdown(activeTitle.value, store.messages));
+  notify("学习笔记已导出，包含回答和原文来源。");
+}
 const defaultSuggestions = [
   {
     icon: BookOpen,
@@ -129,6 +162,7 @@ const suggestions = computed(() =>
           ...defaultSuggestions[2],
           title: "理解防护装备",
           question: "紧密贴合型面罩通过什么方式形成保护屏障？",
+          tag: "原文核对",
         },
       ]
     : openRNLibrary.value
@@ -157,6 +191,7 @@ function report(e: unknown) {
   store.error = e instanceof Error ? e.message : String(e);
 }
 onMounted(async () => {
+  window.addEventListener("hashchange", routeChanged);
   await store.initialize();
   timer = window.setInterval(async () => {
     try {
@@ -167,6 +202,7 @@ onMounted(async () => {
   }, 3000);
 });
 onUnmounted(() => {
+  window.removeEventListener("hashchange", routeChanged);
   clearInterval(timer);
   clearTimeout(noticeTimer);
   store.stop();
@@ -353,7 +389,8 @@ async function feedback(message: Message, rating: "up" | "down") {
           <CircleHelp :size="14" />
         </button>
       </div>
-      <div class="workspace" :class="{ 'sources-hidden': !sourceOpen || view === 'evaluation' }">
+      <div class="workspace" :class="{ 'sources-hidden': !sourceOpen || view !== 'chat' }">
+        <button v-if="mobileLibrary" class="library-backdrop" aria-label="关闭文档库" @click="mobileLibrary = false"></button>
         <aside class="sidebar" :class="{ 'mobile-visible': mobileLibrary }">
           <a href="#" class="brand" @click.prevent="startChat"
             ><span class="brand-mark"><BookOpen :size="23" /></span>
@@ -363,14 +400,17 @@ async function feedback(message: Message, rating: "up" | "down") {
             <Plus :size="17" />新建学习会话<span>＋</span>
           </button>
           <nav class="navigation">
-            <button :class="{ active: view === 'chat' }" @click="view = 'chat'">
+            <button :class="{ active: view === 'chat' }" @click="selectView('chat')">
               <MessageSquare :size="17" />教材问答<ChevronRight :size="14" /></button
             ><button
               :class="{ active: view === 'evaluation' }"
               :disabled="store.generating"
-              @click="view = 'evaluation'"
+              @click="selectView('evaluation')"
             >
-              <ClipboardCheck :size="17" />质量评估<span class="beta-tag">20 题</span>
+              <ClipboardCheck :size="17" />质量评估<span class="beta-tag">真实题集</span>
+            </button>
+            <button :class="{ active: view === 'project' }" :disabled="store.generating" @click="selectView('project')">
+              <Presentation :size="17" />作品说明<ChevronRight :size="14" />
             </button>
           </nav>
           <section class="library-section">
@@ -546,7 +586,7 @@ async function feedback(message: Message, rating: "up" | "down") {
               >
                 <Menu :size="18" /></button
               ><span class="breadcrumb">学习工作台</span><ChevronRight :size="13" /><strong>{{
-                view === "evaluation" ? "质量评估" : "教材问答"
+                {chat: "教材问答", evaluation: "质量评估", project: "作品说明"}[view]
               }}</strong>
             </div>
             <div class="header-controls">
@@ -572,6 +612,7 @@ async function feedback(message: Message, rating: "up" | "down") {
             </div>
           </header>
           <EvaluationPanel v-if="view === 'evaluation'" />
+          <ProjectPanel v-else-if="view === 'project'" @navigate="selectView" @settings="settings" />
           <template v-else>
             <div
               ref="messagesEl"
@@ -637,7 +678,7 @@ async function feedback(message: Message, rating: "up" | "down") {
               <div v-else class="messages">
                 <div class="conversation-heading">
                   <span>{{ activeTitle }}</span
-                  ><span>引用页码为 PDF 物理页码</span>
+                  ><button class="text-button export-conversation" :disabled="store.generating" @click="exportConversation"><Download :size="13" />导出笔记</button>
                 </div>
                 <MessageItem
                   v-for="message in store.messages"
@@ -656,6 +697,10 @@ async function feedback(message: Message, rating: "up" | "down") {
               </div>
             </div>
             <div class="composer-area">
+              <div class="learning-mode-picker" role="group" aria-label="学习方式">
+                <button v-for="item in learningModes" :key="item.id" :aria-pressed="store.learningMode === item.id" :class="{active: store.learningMode === item.id}" :disabled="store.generating || (item.id !== 'answer' && !store.health?.llm_configured)" @click="store.learningMode = item.id">{{ item.label }}</button>
+                <small>{{ learningModes.find(item => item.id === store.learningMode)?.hint }}</small>
+              </div>
               <div v-if="store.error" class="error-alert" role="alert">
                 <AlertTriangle :size="15" /><span>{{ store.error }}</span
                 ><button class="icon-button" aria-label="关闭错误提示" @click="store.error = ''">
@@ -785,7 +830,7 @@ async function feedback(message: Message, rating: "up" | "down") {
                 ><span>{{ source.license || "许可证待核实" }}</span>
               </div>
               <div class="source-card-footer">
-                <span>相关度 {{ Math.round(source.score * 100) }}%</span
+                <span title="用于候选片段排序，不代表回答准确率。">检索排序分 {{ source.score.toFixed(2) }}</span
                 ><button @click="open(source)">打开原文<ExternalLink :size="12" /></button>
               </div>
             </article>

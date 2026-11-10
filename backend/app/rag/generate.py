@@ -2,7 +2,7 @@ import asyncio
 import re
 from openai import AsyncOpenAI
 from ..config import settings
-from .prompts import REFUSAL, SYSTEM, source_prompt
+from .prompts import REFUSAL, SYSTEM, LEARNING_INSTRUCTIONS, source_prompt
 from .usage import record_usage
 
 
@@ -40,9 +40,11 @@ def valid_block(block, source_count):
     return True
 
 
-async def generate(question, sources, history, metrics=None):
+async def generate(question, sources, history, metrics=None, learning_mode='answer'):
     metrics = metrics if metrics is not None else {}
     metrics['mode'] = 'deepseek' if settings.llm_api_key else 'extractive'
+    metrics['learning_mode'] = learning_mode
+    metrics['validated_blocks'] = 0
     if not sources or clinical_request(question):
         yield REFUSAL
         return
@@ -60,7 +62,7 @@ async def generate(question, sources, history, metrics=None):
     try:
         async with client, asyncio.timeout(25):
             stream = await client.chat.completions.create(model=settings.llm_model,
-                messages=[{'role': 'system', 'content': SYSTEM}, *history[-6:],
+                messages=[{'role': 'system', 'content': SYSTEM + '\n' + LEARNING_INSTRUCTIONS[learning_mode]}, *history[-6:],
                           {'role': 'user', 'content': source_prompt(question, sources)}],
                 temperature=settings.llm_temperature, max_tokens=settings.llm_max_tokens, stream=True,
                 stream_options={'include_usage': True}, extra_body={'thinking': {'type': 'disabled'}})
@@ -76,12 +78,14 @@ async def generate(question, sources, history, metrics=None):
                             if block.strip():
                                 if not valid_block(block, len(sources)):
                                     raise ValueError('模型输出未通过引用编号与逐句引用检查，已停止输出。')
+                                metrics['validated_blocks'] += 1
                                 yield block + '\n\n'
                         if choice.finish_reason == 'length':
                             raise ValueError('回答达到长度限制，请缩小问题范围后重试。')
                 if pending.strip():
                     if not valid_block(pending, len(sources)):
                         raise ValueError('模型输出未通过引用编号与逐句引用检查，已停止输出。')
+                    metrics['validated_blocks'] += 1
                     yield pending
     except ValueError:
         raise

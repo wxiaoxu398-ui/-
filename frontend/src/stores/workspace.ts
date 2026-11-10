@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { api, stream } from "../api";
-import type { Document, Source, Message, Conversation, Health, Task } from "../types";
+import type { Document, Source, Message, Conversation, Health, Task, LearningMode } from "../types";
 
 export const useWorkspace = defineStore("workspace", () => {
   const documents = ref<Document[]>([]),
@@ -20,6 +20,7 @@ export const useWorkspace = defineStore("workspace", () => {
   const mode = computed(() =>
     health.value?.answer_mode === "deepseek" ? "DeepSeek 问答" : "原文摘录模式",
   );
+  const learningMode = ref<LearningMode>("answer");
   const sources = computed<Source[]>(
     () => messages.value.find((m) => m.id === selectedMessage.value)?.sources || [],
   );
@@ -100,6 +101,8 @@ export const useWorkspace = defineStore("workspace", () => {
       content: "",
       sources: [],
       status: "generating",
+      phase: "retrieving",
+      metrics: { learning_mode: learningMode.value },
     };
     messages.value.push(
       {
@@ -121,6 +124,7 @@ export const useWorkspace = defineStore("workspace", () => {
           question,
           document_ids: selectedDocuments.value,
           top_k: 6,
+          learning_mode: learningMode.value,
         },
         controller.signal,
         (event, data) => {
@@ -130,12 +134,17 @@ export const useWorkspace = defineStore("workspace", () => {
             activeId.value = data.conversation_id;
             current.id = data.message_id;
             selectedMessage.value = data.message_id;
+            current.metrics = { ...current.metrics, mode: data.mode, learning_mode: data.learning_mode };
             localStorage.setItem("medrag.conversation", String(data.conversation_id));
           }
           if (event === "sources") current.sources = data.sources;
+          if (event === "phase") {
+            current.phase = data.phase;
+            current.metrics = { ...current.metrics, retrieval_ms: data.retrieval_ms, retrieved_sources: data.source_count };
+          }
           if (event === "delta") current.content += data.content;
           if (event === "done") {
-            current.status = data.finish_reason === "error" ? "error" : "complete";
+            current.status = data.finish_reason === "error" ? "error" : data.finish_reason === "cancelled" ? "stopped" : "complete";
             current.metrics = data.metrics;
           }
           if (event === "error") {
@@ -194,6 +203,7 @@ export const useWorkspace = defineStore("workspace", () => {
     generating,
     loading,
     mode,
+    learningMode,
     sources,
     refresh,
     initialize,

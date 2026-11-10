@@ -62,12 +62,19 @@ async def chat(payload: ChatRequest, request: Request):
         started, first = time.perf_counter(), None
         try:
             mode = 'deepseek' if settings.llm_api_key else 'extractive'
-            yield event('meta', {'conversation_id': cid, 'message_id': mid, 'mode': mode})
+            yield event('meta', {'conversation_id': cid, 'message_id': mid, 'mode': mode,
+                                 'learning_mode': payload.learning_mode})
+            retrieval_started = time.perf_counter()
             sources = [] if clinical_request(question) else await asyncio.to_thread(hybrid_search, question, payload.top_k, payload.document_ids, history)
             if mode == 'extractive':
                 sources = sources[:3]
+            metrics['retrieval_ms'] = round((time.perf_counter() - retrieval_started) * 1000)
+            metrics['retrieved_sources'] = len(sources)
+            metrics['learning_mode'] = payload.learning_mode
             yield event('sources', {'sources': sources})
-            async for block in generate(question, sources, history, metrics):
+            yield event('phase', {'phase': 'generating' if sources else 'refusing',
+                                  'source_count': len(sources), 'retrieval_ms': metrics['retrieval_ms']})
+            async for block in generate(question, sources, history, metrics, payload.learning_mode):
                 if await request.is_disconnected():
                     status, finish = 'stopped', 'cancelled'
                     break
