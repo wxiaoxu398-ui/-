@@ -1,0 +1,4 @@
+# Optional dependencies for technical PDF authoring, separate from app runtime.
+reportlab==4.4.9
+pypdf>=5,<7
+Pillow>=11,<13

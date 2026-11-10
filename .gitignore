@@ -15,3 +15,7 @@ eval/results*.json
 .tsbuildinfo
 *.tsbuildinfo
 .local/
+deliverables/
+output/
+tmp/
+submission/team-info.json
