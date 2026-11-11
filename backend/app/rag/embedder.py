@@ -1,16 +1,32 @@
 from functools import lru_cache
+from pathlib import Path
 from ..config import settings
 from .storage import vector_storage_path
 
 
+def cached_model_path():
+    """Resolve the local snapshot without contacting the model host at boot."""
+    direct = Path(settings.embedding_model)
+    if direct.is_dir():
+        return direct.resolve()
+    from huggingface_hub import snapshot_download
+    from huggingface_hub.errors import LocalEntryNotFoundError
+    try:
+        return Path(snapshot_download(settings.embedding_model, cache_dir=str(settings.model_cache_dir),
+                                      local_files_only=True))
+    except LocalEntryNotFoundError as exc:
+        raise FileNotFoundError('本地检索模型未准备好。请联网运行 prepare-medrag.cmd，完成后重新启动。') from exc
+
+
 @lru_cache(maxsize=1)
 def model():
+    local_model = cached_model_path()
     if settings.embedding_device == 'cpu':
         import torch
         torch.set_num_threads(settings.embedding_cpu_threads)
     from sentence_transformers import SentenceTransformer
-    return SentenceTransformer(settings.embedding_model, device=settings.embedding_device,
-                               cache_folder=str(settings.model_cache_dir), trust_remote_code=False)
+    return SentenceTransformer(str(local_model), device=settings.embedding_device,
+                               local_files_only=True, trust_remote_code=False)
 
 
 def embed(texts: list[str], query=False):

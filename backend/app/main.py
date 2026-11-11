@@ -70,7 +70,9 @@ def health():
     with Session(engine) as session:
         docs = session.exec(select(Document)).all()
         chunks = session.exec(select(Chunk.id)).all()
-    return {'status': 'ok', 'version': '1.0.0', 'llm_model': settings.llm_model,
+    project_id = hashlib.sha256(Path(__file__).resolve().parents[2].as_posix().lower().encode()).hexdigest()[:16]
+    return {'status': 'ok', 'service': 'medrag', 'project_id': project_id,
+            'version': '1.0.0', 'llm_model': settings.llm_model,
             'library_revision': hashlib.sha256(json.dumps(
                 sorted((doc.id, doc.file_hash, doc.status, doc.num_chunks, doc.indexed_backend) for doc in docs)
             ).encode()).hexdigest()[:20],

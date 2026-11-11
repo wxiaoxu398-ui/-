@@ -1,106 +1,138 @@
-param([switch] $NoBrowser, [switch] $DownloadDemoBooks, [switch] $DownloadChineseBooks)
+﻿param(
+    [switch] $NoBrowser, [switch] $NoPause, [switch] $Prepare,
+    [switch] $DownloadDemoBooks, [switch] $DownloadChineseBooks,
+    [ValidateRange(15, 600)] [int] $StartupTimeoutSec = 180
+)
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $localDir = Join-Path $projectRoot '.local'
 New-Item -ItemType Directory -Path $localDir -Force | Out-Null
-$pythonPath = Join-Path $projectRoot '.venv\Scripts\python.exe'
+$url = 'http://127.0.0.1:8000/'
 $backendDir = Join-Path $projectRoot 'backend'
-$frontendDir = Join-Path $projectRoot 'frontend'
+$expectedScript = Join-Path $backendDir 'run.py'
+$lock = $null
+$locked = $false
+$transcribing = $false
+$exitCode = 0
 
-function Invoke-Checked {
-    param([string] $Executable, [string[]] $Arguments)
-    & $Executable @Arguments
-    if ($LASTEXITCODE -ne 0) { throw "Command failed: $Executable (exit $LASTEXITCODE)" }
+function Get-Health {
+    try { return Invoke-RestMethod -Uri ($url + 'api/health') -TimeoutSec 2 } catch { return $null }
 }
-
-function Start-ChineseIndex {
-    if ($DownloadChineseBooks) {
-        Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/documents/ingest' -Method Post -ContentType 'application/json' -Body '{"rebuild":false}' | Out-Null
-        Write-Host 'Chinese manuals are imported. Incremental indexing progress is shown in the library.'
+function Test-OurService($Health) {
+    if (-not $Health -or $Health.status -ne 'ok') { return $false }
+    if ($Health.service -eq 'medrag' -and $Health.project_id -eq $projectId) { return $true }
+    # Accept an already-running older version only when its process belongs here.
+    $listeners = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue
+    foreach ($listener in $listeners) {
+        $owner = Get-CimInstance Win32_Process -Filter ("ProcessId = " + $listener.OwningProcess)
+        if ($owner -and $owner.CommandLine -and $owner.CommandLine.Contains($expectedScript)) { return $true }
     }
+    return $false
+}
+function Open-Page {
+    if (-not $NoBrowser) {
+        try { Start-Process $url } catch { Write-Host '浏览器未能自动打开，请复制下方地址到 Chrome 或 Edge。' -ForegroundColor Yellow }
+    }
+    Write-Host ('网页已就绪：' + $url) -ForegroundColor Green
 }
 
 try {
-    if (-not (Test-Path -LiteralPath $pythonPath)) {
-        $bundledPython = Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
-        if (Test-Path -LiteralPath $bundledPython) {
-            Invoke-Checked $bundledPython @('-m', 'venv', (Join-Path $projectRoot '.venv'))
-        } elseif (Get-Command py -ErrorAction SilentlyContinue) {
-            $foundPython = $false
-            foreach ($version in @('-3.12', '-3.11', '-3.13')) {
-                & py $version -c 'import sys; print(sys.version)' 2>$null
-                if ($LASTEXITCODE -eq 0) {
-                    Invoke-Checked 'py' @($version, '-m', 'venv', (Join-Path $projectRoot '.venv'))
-                    $foundPython = $true
-                    break
-                }
-            }
-            if (-not $foundPython) { throw 'Install Python 3.11-3.13 from python.org, then run this launcher again.' }
-        } else {
-            & python -c 'import sys; assert (3, 11) <= sys.version_info[:2] <= (3, 13)'
-            if ($LASTEXITCODE -ne 0) { throw 'Python 3.11-3.13 is required. Install it from python.org.' }
-            Invoke-Checked 'python' @('-m', 'venv', (Join-Path $projectRoot '.venv'))
-        }
-    }
-    $depsMarker = Join-Path $localDir 'dependencies.sha256'
-    $dependencyFiles = @('requirements.txt', 'requirements-core.txt', 'requirements-lock.txt') | ForEach-Object { Join-Path $backendDir $_ }
-    $dependencyHash = (($dependencyFiles | ForEach-Object { (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash }) -join '-')
-    $dependenciesMatch = (Test-Path -LiteralPath $depsMarker) -and (Get-Content -LiteralPath $depsMarker -Raw).Trim() -eq $dependencyHash
-    if (-not $dependenciesMatch) {
-        Write-Host 'Installing local backend dependencies. The first run may take several minutes.'
-        Invoke-Checked $pythonPath @('-m', 'pip', 'install', '-r', (Join-Path $backendDir 'requirements-lock.txt'))
-        Set-Content -LiteralPath $depsMarker -Value $dependencyHash -Encoding UTF8
-    }
-    if (-not (Test-Path -LiteralPath (Join-Path $backendDir '.env'))) {
-        Copy-Item -LiteralPath (Join-Path $backendDir '.env.example') -Destination (Join-Path $backendDir '.env')
-    }
-    if ($DownloadDemoBooks) {
-        Invoke-Checked $pythonPath @((Join-Path $PSScriptRoot 'download_open_books.py'), '--output', (Join-Path $backendDir 'app\data\books'))
-    }
-    if ($DownloadChineseBooks) {
-        Invoke-Checked $pythonPath @((Join-Path $PSScriptRoot 'download_chinese_books.py'), '--output', (Join-Path $backendDir 'app\data\books'))
-    }
-    $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
-    if (-not $npmCommand) { throw 'Node.js 20.19+ is required. Install the LTS version from nodejs.org.' }
-    $buildInputs = @(Get-ChildItem -LiteralPath (Join-Path $frontendDir 'src') -File -Recurse) + @(Get-Item -LiteralPath (Join-Path $frontendDir 'package.json'), (Join-Path $frontendDir 'package-lock.json'), (Join-Path $frontendDir 'index.html'), (Join-Path $frontendDir 'vite.config.ts'), (Join-Path $frontendDir 'tsconfig.json'))
-    $buildHash = (($buildInputs | Sort-Object FullName | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }) -join '-')
-    $buildMarker = Join-Path $localDir 'frontend.sha256'
-    if (-not (Test-Path -LiteralPath (Join-Path $frontendDir 'dist\index.html')) -or -not (Test-Path -LiteralPath $buildMarker) -or (Get-Content -LiteralPath $buildMarker -Raw).Trim() -ne $buildHash) {
-        Push-Location -LiteralPath $frontendDir
-        try {
-            Write-Host 'Preparing the web interface...'
-            if (-not (Test-Path -LiteralPath (Join-Path $frontendDir 'node_modules\vite\bin\vite.js'))) {
-                Invoke-Checked $npmCommand.Source @('ci')
-            } else {
-                Invoke-Checked $npmCommand.Source @('install', '--no-audit', '--no-fund')
-            }
-            Invoke-Checked $npmCommand.Source @('run', 'build')
-            Set-Content -LiteralPath $buildMarker -Value $buildHash -Encoding UTF8
-        } finally { Pop-Location }
-    }
-    $existing = $null
-    try { $existing = Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/health' -TimeoutSec 2 } catch {}
-    if ($existing -and $existing.version -and $existing.llm_model) {
-        Start-ChineseIndex
-        if (-not $NoBrowser) { Start-Process 'http://127.0.0.1:8000/' }
-        Write-Host 'MedRAG is already running.'
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { $projectId = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($projectRoot.Replace('\', '/').ToLowerInvariant())))).Replace('-', '').ToLowerInvariant().Substring(0, 16) } finally { $sha.Dispose() }
+    $lock = New-Object Threading.Mutex($false, ('Local\MedRAG-' + $projectId))
+    try { $locked = $lock.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked = $true }
+    if (-not $locked) {
+        Write-Host '另一个启动窗口正在准备服务，请等待该窗口完成。'
         exit 0
     }
-    $serverScript = Join-Path $backendDir 'run.py'
-    $process = Start-Process -FilePath $pythonPath -ArgumentList @('"' + $serverScript + '"') -WorkingDirectory $backendDir -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $localDir 'server.log') -RedirectStandardError (Join-Path $localDir 'server-error.log')
-    Set-Content -LiteralPath (Join-Path $localDir 'server.pid') -Value $process.Id -Encoding ASCII
-    $ready = $false
-    for ($attempt = 0; $attempt -lt 40; $attempt++) {
-        if ($process.HasExited) { throw 'Local server exited. See .local/server-error.log.' }
-        try { $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/health' -TimeoutSec 2; if ($health.status -eq 'ok') { $ready = $true; break } } catch {}
-        Start-Sleep -Milliseconds 500
+    Start-Transcript -Path (Join-Path $localDir 'launcher.log') -Append | Out-Null
+    $transcribing = $true
+    Write-Host 'MedRAG 正在启动，请等待网页自动打开。'
+    $health = Get-Health
+    if (Test-OurService $health) {
+        if ($Prepare -or $DownloadDemoBooks -or $DownloadChineseBooks) { throw '服务正在运行。请先双击 stop-medrag.cmd 停止，再执行准备或下载。日常使用直接启动即可。' }
+        Open-Page
+    } else {
+        if ($health -or (Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue)) {
+            throw '8000 端口被其他程序或另一份作品占用。请关闭该程序后重试；本启动器不会结束其他程序。'
+        }
+        if ($Prepare -or $DownloadDemoBooks -or $DownloadChineseBooks) {
+            $setupArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'setup.ps1'), '-NoPause')
+            if ($DownloadDemoBooks) { $setupArgs += '-DownloadDemoBooks' }
+            if ($DownloadChineseBooks) { $setupArgs += '-DownloadChineseBooks' }
+            & (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') @setupArgs
+            if ($LASTEXITCODE -ne 0) { throw '环境准备失败，请查看本窗口和 .local/launcher.log。' }
+        }
+        $pythonPath = $null
+        foreach ($candidate in @((Join-Path $projectRoot 'runtime\python\python.exe'), (Join-Path $projectRoot '.venv\Scripts\python.exe'))) {
+            if (Test-Path -LiteralPath $candidate) {
+                try {
+                    & $candidate -c 'import sys; assert (3,11) <= sys.version_info[:2] <= (3,13); import uvicorn, fastapi, sqlmodel, pymupdf' 2>$null
+                    if ($LASTEXITCODE -eq 0) { $pythonPath = $candidate; break }
+                } catch {}
+            }
+        }
+        if (-not $pythonPath) { throw 'Python 运行环境缺失或已失效。请先联网双击 prepare-medrag.cmd 完成准备，再启动网页。' }
+        # A review package carries a public-book-only vector seed, never user history.
+        $seed = Join-Path $projectRoot 'runtime\vector-seed'
+        if (Test-Path -LiteralPath $seed) {
+            & $pythonPath (Join-Path $PSScriptRoot 'restore_vector_seed.py')
+            if ($LASTEXITCODE -ne 0) { throw '评审资料索引准备失败，请运行 check-medrag.cmd 查看环境。' }
+        }
+        $checkOutput = & $pythonPath (Join-Path $PSScriptRoot 'check_environment.py') --json
+        $checkExit = $LASTEXITCODE
+        $check = ($checkOutput -join [Environment]::NewLine) | ConvertFrom-Json
+        if ($checkExit -ne 0 -or -not $check.ready) {
+            foreach ($item in $check.checks) { if (-not $item.ok) { Write-Host ($item.name + '：' + $item.message) -ForegroundColor Yellow } }
+            throw '环境检查未通过。请先运行 prepare-medrag.cmd；详细检查可双击 check-medrag.cmd。'
+        }
+        $process = $null
+        $pidFile = Join-Path $localDir 'server.pid'
+        if (Test-Path -LiteralPath $pidFile) {
+            $savedProcessId = 0
+            if ([int]::TryParse((Get-Content -LiteralPath $pidFile -Raw).Trim(), [ref]$savedProcessId)) {
+                $saved = Get-CimInstance Win32_Process -Filter ("ProcessId = " + $savedProcessId)
+                if ($saved -and $saved.CommandLine -and $saved.CommandLine.Contains($expectedScript)) {
+                    $process = Get-Process -Id $savedProcessId -ErrorAction SilentlyContinue
+                    Write-Host '上一次启动仍在加载，继续等待同一个进程。'
+                }
+            }
+        }
+        if ($null -eq $process) {
+            $process = Start-Process -FilePath $pythonPath -ArgumentList @('"' + $expectedScript + '"') -WorkingDirectory $backendDir -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $localDir 'server.log') -RedirectStandardError (Join-Path $localDir 'server-error.log')
+            Set-Content -LiteralPath $pidFile -Value $process.Id -Encoding ASCII
+        }
+        $timer = [Diagnostics.Stopwatch]::StartNew()
+        $nextProgress = 0
+        $ready = $false
+        while ($timer.Elapsed.TotalSeconds -lt $StartupTimeoutSec) {
+            $process.Refresh()
+            if ($process.HasExited) { throw '后台服务退出。请查看 .local/server-error.log，或运行 check-medrag.cmd。' }
+            $health = Get-Health
+            if (Test-OurService $health) { $ready = $true; break }
+            if ($timer.Elapsed.TotalSeconds -ge $nextProgress) {
+                Write-Host ('正在加载本地教材和检索模型，已等待 ' + [int]$timer.Elapsed.TotalSeconds + ' 秒…')
+                $nextProgress += 5
+            }
+            Start-Sleep -Milliseconds 500
+        }
+        if (-not $ready) { throw ('启动等待超过 ' + $StartupTimeoutSec + ' 秒。后台可能仍在加载，请查看 .local/server-error.log 后重试；不会结束其他程序。') }
+        $page = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 5
+        if ($page.StatusCode -ne 200 -or -not $page.Content.Contains('MedRAG')) { throw '后台已启动，但网页文件异常。请运行 prepare-medrag.cmd 修复页面。' }
+        if ($DownloadChineseBooks) {
+            Invoke-RestMethod -Uri ($url + 'api/documents/ingest') -Method Post -ContentType 'application/json' -Body '{"rebuild":false}' | Out-Null
+        }
+        Open-Page
     }
-    if (-not $ready) { throw 'Local service did not become ready. See .local/server-error.log.' }
-    Start-ChineseIndex
-    if (-not $NoBrowser) { Start-Process 'http://127.0.0.1:8000/' }
-    Write-Host 'MedRAG is running at http://127.0.0.1:8000. Use stop-medrag.cmd to stop it.'
 } catch {
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    Read-Host 'Press Enter to close'
-    exit 1
+    $exitCode = 1
+    Write-Host ('启动未完成：' + $_.Exception.Message) -ForegroundColor Red
+    Write-Host ('启动记录：' + (Join-Path $localDir 'launcher.log'))
+    Write-Host '本窗口会保留错误；请勿重新安装或删除已有教材、密钥与会话。'
+    if (-not $NoPause) { Read-Host '按回车关闭' | Out-Null }
+} finally {
+    if ($transcribing) { Stop-Transcript | Out-Null }
+    if ($locked) { $lock.ReleaseMutex() }
+    if ($null -ne $lock) { $lock.Dispose() }
 }
+exit $exitCode
