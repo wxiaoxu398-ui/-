@@ -1,7 +1,7 @@
 ﻿param(
     [switch] $NoBrowser, [switch] $NoPause, [switch] $Prepare,
     [switch] $DownloadDemoBooks, [switch] $DownloadChineseBooks,
-    [ValidateRange(15, 600)] [int] $StartupTimeoutSec = 180
+    [ValidateRange(15, 600)] [int] $StartupTimeoutSec = 300
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
