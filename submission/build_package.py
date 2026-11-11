@@ -1,7 +1,11 @@
 r"""Assemble the reviewed MedRAG submission inputs without publishing anything.
 
 Run after committing the text inputs and reviewing the rendered PDF, for example:
-    .venv\Scripts\python.exe submission/build_package.py --pdf-pages 11
+    .venv\Scripts\python.exe submission/build_package.py --date 20261111 --pdf-pages 11
+
+Pass --repository-verified-commit only after independently reading that full SHA
+from the intended remote. Local origin configuration is not upload evidence.
+Add --repository-public-read-verified only when that external read was anonymous.
 
 The output must not already exist. No existing directory is deleted or replaced.
 Only explicitly listed materials are copied; the actual .env and user database
@@ -26,6 +30,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 OFFICIAL_URL = "https://www.boxuegu.com/matchTrack/detail/?id=10037"
+REPOSITORY_URL = "https://github.com/wxiaoxu398-ui/-"
 PACKAGE_PREFIX = "MedRAG-Submission-"
 SECRET_PATTERNS = (
     re.compile(rb"sk-[A-Za-z0-9_-]{24,}"),
@@ -70,6 +75,12 @@ LOCAL_ONLY_INPUTS = {"submission/team-info.json"}
 
 class PackageError(RuntimeError):
     """A safe-to-display error; never embed unredacted Git stderr or key values."""
+
+
+def full_commit_sha(value: str) -> str:
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", value):
+        raise argparse.ArgumentTypeError("必须使用完整的 40 位十六进制提交 SHA。")
+    return value.casefold()
 
 
 def inside_repo(path: Path, *, allow_root: bool = False) -> Path:
@@ -285,6 +296,87 @@ def team_status(team: dict[str, Any]) -> dict[str, Any]:
             "division_proposals_are_not_confirmed_members": True}
 
 
+def normalize_repository_url(value: str) -> str | None:
+    """Map common GitHub HTTPS/SSH forms to a safe public URL, never credentials."""
+    value = value.strip()
+    scp = re.fullmatch(r"(?:[^@/\s]+@)?github\.com:([^\s?#]+)", value, flags=re.I)
+    if scp:
+        path = scp.group(1)
+    else:
+        try:
+            parsed = urlsplit(value)
+            host = (parsed.hostname or "").casefold()
+            port = parsed.port
+        except ValueError:
+            return None
+        scheme = parsed.scheme.casefold()
+        allowed_ports = {"https": {None, 443}, "http": {None, 80}, "ssh": {None, 22}, "git": {None, 9418}}
+        if (host not in {"github.com", "www.github.com"} or scheme not in allowed_ports
+                or port not in allowed_ports[scheme] or parsed.query or parsed.fragment):
+            return None
+        path = parsed.path
+    path = path.strip("/")
+    if path.casefold().endswith(".git"):
+        path = path[:-4]
+    parts = path.split("/")
+    if len(parts) != 2 or not all(re.fullmatch(r"[A-Za-z0-9_.-]+", part) for part in parts):
+        return None
+    if any(part in {".", ".."} for part in parts):
+        return None
+    return "https://github.com/" + "/".join(part.casefold() for part in parts)
+
+
+def repository_status(package_commit: str, verified_commit: str | None, public_read_verified: bool = False) -> dict[str, Any]:
+    """Validate a caller's remote-read record; this function never contacts/pushes a remote."""
+    if public_read_verified and not verified_commit:
+        raise PackageError("--repository-public-read-verified 必须与 --repository-verified-commit 一同使用。")
+    try:
+        origin_url = git(["config", "--get", "remote.origin.url"]).decode("utf-8").strip()
+    except PackageError:
+        origin_url = ""
+    origin_matches = normalize_repository_url(origin_url) == normalize_repository_url(REPOSITORY_URL)
+    if verified_commit:
+        if not re.fullmatch(r"[0-9a-fA-F]{40}", verified_commit):
+            raise PackageError("--repository-verified-commit 必须是完整的 40 位十六进制提交 SHA。")
+        verified_commit = verified_commit.casefold()
+        if not origin_matches:
+            raise PackageError("origin 不匹配已提供的 MedRAG 仓库，不能记录该远端提交核验。")
+        try:
+            if git(["cat-file", "-t", verified_commit]).strip() != b"commit":
+                raise PackageError("核验 SHA 不是提交对象。")
+            git(["merge-base", "--is-ancestor", verified_commit, "HEAD"])
+        except PackageError as exc:
+            raise PackageError("远端核验 SHA 不是当前 HEAD 的有效祖先提交，已停止。") from exc
+    same_head = bool(verified_commit and verified_commit == package_commit.casefold())
+    return {
+        "provided_repository_url": REPOSITORY_URL,
+        "origin_matches_provided_repository": origin_matches,
+        "remote_read_verified_commit": verified_commit,
+        "verified_repository_url": REPOSITORY_URL if verified_commit else None,
+        "package_head_confirmed_on_remote": same_head,
+        "external_anonymous_read_verified": bool(public_read_verified),
+        "package_head_public_read_confirmed": bool(same_head and public_read_verified),
+        "upload_status": "package_head_confirmed" if same_head else "verified_to_ancestor_only" if verified_commit else "not_verified",
+        "verification_basis": "caller_supplied_remote_read_sha_checked_against_origin_and_local_ancestry" if verified_commit else "no_remote_read_record_provided",
+        "remote_read_performed_by_packager": False,
+        "reviewer_access_verified_by_packager": False,
+        "anonymous_read_performed_by_packager": False,
+        "remote_configuration_alone_is_upload_evidence": False,
+    }
+
+
+def repository_followup(status: dict[str, Any]) -> str:
+    if status.get("package_head_public_read_confirmed"):
+        return "提交时复核公开仓库入口、分支与版本，使官网填报与已核验的作品提交一致"
+    if status["package_head_confirmed_on_remote"]:
+        return "核验赛事评审访问该仓库的权限，并明确评审使用的分支或提交；已核验上传不等于权限已确认"
+    if status["remote_read_verified_commit"]:
+        if status.get("external_anonymous_read_verified"):
+            return "匿名公开读取仅核验至历史提交，本包 HEAD 尚未确认上传；核验当前包提交后，再于提交时复核仓库入口与版本"
+        return "仓库已核验至历史提交，但本包 HEAD 尚未确认上传；补传需要的提交后重新读取远端 SHA 核对，并确认评审访问权限"
+    return "核验真实仓库的上传结果，记录远端读取的完整 SHA，并确认评审访问权限；不能只凭 origin 配置认定上传成功"
+
+
 def validate_team_example(example: Any) -> None:
     """The public source template must not retain the local team-page reference."""
     if not isinstance(example, dict):
@@ -343,8 +435,18 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def index_markdown(commit: str, implementation: str, pdf_pages: int, status: dict[str, Any]) -> str:
+def index_markdown(commit: str, implementation: str, pdf_pages: int, status: dict[str, Any], repository: dict[str, Any]) -> str:
     team_line = "已填写，仍需团队确认。" if status["information_complete"] else "待填写：" + "、".join(status["missing_fields"]) + "。"
+    verified = repository["remote_read_verified_commit"]
+    if repository.get("package_head_public_read_confirmed"):
+        repository_line = f"外部匿名读取已核验公开仓库提交 `{verified}`，与本包 HEAD 一致；可确认该归档提交已公开可读。仓库读取项不再列为未完成，提交时复核入口与版本即可；本记录不等于官网材料已经提交。"
+    elif repository["package_head_confirmed_on_remote"]:
+        repository_line = f"远端读取记录已核验提交 `{verified}`，与本包 HEAD 一致；可确认该归档提交已在上述仓库读取到，尚不代表评审权限或官网提交已确认。"
+    elif verified:
+        read_kind = "外部匿名公开读取" if repository.get("external_anonymous_read_verified") else "远端读取记录"
+        repository_line = f"{read_kind}仅核验至历史提交 `{verified}`；本包 HEAD 为 `{commit}`，二者不同，不能声称本包 HEAD 已上传或已通过当前包的公开读取核验。"
+    else:
+        repository_line = "已提供具体仓库地址，但未提供远端读取 SHA 核验记录，不能确认本包 HEAD 已上传。origin 配置不是上传或评审访问的证明。"
     return f"""# MedRAG 参赛材料索引
 
 本包整理了本地作品、技术 PDF、源码与开发历史、演示脚本及验证记录；**本包尚不能证明已完成官网提交**。
@@ -354,7 +456,7 @@ def index_markdown(commit: str, implementation: str, pdf_pages: int, status: dic
 - [干净源码 ZIP](01-源码/MedRAG-source.zip)：按归档提交生成，不含实际密钥、教材 PDF、数据库、索引或依赖缓存。
 - [开发历史 bundle](01-源码/MedRAG-history.bundle)：当前 HEAD 可达历史，已经过 bundle verify 和独立 bare clone 校验；不等同于 GitHub / Gitee 托管。
 - [复现与提交指南](01-源码/复现与提交指南.md)：安装、恢复历史、运行和提交说明。
-- [技术文档 PDF](02-技术文档/MedRAG-技术文档.pdf)：{pdf_pages} 页，团队信息与内容仍需团队最终确认。
+- [技术文档 PDF](02-技术文档/MedRAG-技术文档.pdf)：{pdf_pages} 页，已生成，内容仍需团队最终确认。
 - [可编辑技术正文](02-技术文档/technical-report.md)：技术 PDF 的可编辑正文。
 - [提交清单](02-技术文档/01-提交清单.md)、[团队信息](02-技术文档/team-info.json)：逐项要求和待补信息。
 - [演示视频脚本](03-演示视频/演示视频脚本.md)：录制分镜；**本包没有 MP4 成品**。
@@ -363,10 +465,18 @@ def index_markdown(commit: str, implementation: str, pdf_pages: int, status: dic
 
 源码 ZIP 与 Git bundle 只应包含清空用户特定报名页参考信息的 `submission/team-info.example.json`，不包含本机实际 `submission/team-info.json`。实际团队文件单独放在本包 `02-技术文档/team-info.json`，可能保留团队提供的报名页参考链接，仅供本机交接及团队核对；不要未经审阅就把整个总 ZIP 上传到公开仓库。正式署名应同步到 README 和 PDF，建议分工不能当作成员已经确认。
 
+## 仓库与上传核验
+
+实际仓库：[{REPOSITORY_URL}]({REPOSITORY_URL})。
+
+{repository_line}
+
+本记录由调用者提供实际远端读取结果，匿名公开读取仅在显式传入已核验标志时记录。打包脚本只校验 origin 目标与本地提交关系，不联网读取或推送，不修改默认分支、仓库可见性或评审权限。
+
 ## 仍需完成
 
-1. 团队资料：{team_line}
-2. 提供具体 GitHub / Gitee 仓库，上传真实历史并核验评审访问权限。创建入口网址不算仓库地址。
+1. 团队资料：{team_line}实名建议分工与署名仍需团队终审；指导老师如有则补充。
+2. {repository_followup(repository)}。
 3. 录制并核验 5-8 分钟、至少 1080p、普通话讲解的 MP4。
 4. 同步团队资料、最终仓库链接与技术 PDF，并由团队终审。医学结论仍应逐条核对，原页命中不能代替语义准确率。
 5. 参赛者本人核对轮次、报名/缴费、提交入口和截止时间，完成官方上传并保存回执。
@@ -378,7 +488,7 @@ def index_markdown(commit: str, implementation: str, pdf_pages: int, status: dic
 - 归档提交：`{commit}`
 - 应用实现基线：`{implementation}`
 - 要求来源：{OFFICIAL_URL}
-- 本包未报名、缴费、创建远程仓库、授予评审权限或上传任何材料；账户已有状态无法由本地文件核实。
+- 此打包脚本不执行报名、缴费、代码推送、权限变更或官网材料上传；代码上传状态仅按上述远端核验记录表述，报名账户已有状态无法由本地文件核实。
 - 模式与测试范围以验证记录为准；没有把自主 Agent、多模态、MCP 或人工医学核验列作已完成。
 """
 
@@ -400,6 +510,8 @@ def create_package(args: argparse.Namespace) -> dict[str, Any]:
     if git(["status", "--porcelain", "--untracked-files=no"]).strip():
         raise PackageError("存在未提交的已跟踪文件变更。请先提交待归档文本，再生成材料包。")
     commit = git(["rev-parse", "HEAD"]).decode("ascii").strip()
+    repository = repository_status(commit, getattr(args, "repository_verified_commit", None),
+                                   getattr(args, "repository_public_read_verified", False))
     implementation = git(["rev-parse", args.implementation_commit + "^{commit}"]).decode("ascii").strip()
     git(["merge-base", "--is-ancestor", implementation, "HEAD"])
     history_audit = audit_head_history()
@@ -446,7 +558,7 @@ def create_package(args: argparse.Namespace) -> dict[str, Any]:
     if raw is not None:
         write_new(target / "04-验证与资料/真实中文题集结果.json",
                   (json.dumps(raw, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
-    write_new(target / "00-材料索引.md", index_markdown(commit, implementation, args.pdf_pages, status).encode("utf-8"))
+    write_new(target / "00-材料索引.md", index_markdown(commit, implementation, args.pdf_pages, status, repository).encode("utf-8"))
     write_new(target / "03-演示视频/尚缺视频成品.txt",
               "本目录只有录制脚本，尚无 MP4。需团队录制 5-8 分钟、至少 1080p、普通话讲解的视频。\n".encode("utf-8"))
     payload = [{"path": path.relative_to(target).as_posix(), "bytes": path.stat().st_size, "sha256": sha256(path)}
@@ -458,8 +570,9 @@ def create_package(args: argparse.Namespace) -> dict[str, Any]:
         "source_archive_files": source_count, "git_history_audit": history_audit,
         "bundle_verify": "passed", "bundle_bare_clone": "passed_same_HEAD_and_commit_count",
         "technical_pdf_pages": args.pdf_pages, "pdf_pages_source": "provided_after_external_render_review",
-        "technical_pdf_status": "generated_requires_team_information_sync_and_final_review",
+        "technical_pdf_status": "generated_requires_team_final_review",
         "team": status, "remote_configured": remote_configured,
+        "repository": repository,
         "team_info_handling": {
             "source_template": "submission/team-info.example.json",
             "source_template_team_reference": "cleared_and_checked",
@@ -467,7 +580,11 @@ def create_package(args: argparse.Namespace) -> dict[str, Any]:
             "actual_file_in_source_or_history": False,
             "distribution_note": "实际团队 JSON 为本机交接材料，公开上传前需审阅其中的用户特定报名页参考信息。",
         },
-        "reviewer_repository_access": "not_verified_by_this_packager",
+        "reviewer_repository_access": (
+            "externally_verified_public_anonymous_read_at_package_head" if repository["package_head_public_read_confirmed"]
+            else "external_anonymous_read_verified_to_ancestor_only" if repository["external_anonymous_read_verified"]
+            else "not_verified_by_this_packager"
+        ),
         "demo_mp4": "missing", "online_demo": "optional_not_publicly_deployed",
         "platform_registration_payment_submission": "unknown_not_performed_by_this_package",
         "raw_public_evaluation_included": raw is not None,
@@ -475,8 +592,8 @@ def create_package(args: argparse.Namespace) -> dict[str, Any]:
         "screenshots_included": len(screenshots),
         "semantic_citation_accuracy": None,
         "requires_user_action": [
-            "补齐真实团队信息并确认分工" if not status["information_complete"] else "团队确认资料与署名",
-            "提供具体 GitHub/Gitee 仓库并验证评审可访问，ZIP/bundle 不能替代托管",
+            "团队终审实名建议分工与署名，指导老师如有则补充",
+            repository_followup(repository),
             "录制和核验符合规格的 MP4，脚本与截图不能替代视频",
             "团队终审并同步技术 PDF、README、视频与最终仓库链接",
             "本人核对实际轮次与官方通知，完成上传并保留回执",
@@ -507,16 +624,21 @@ def create_package(args: argparse.Namespace) -> dict[str, Any]:
             "archive_sha256": sha256(total_zip), "source_commit": commit,
             "pdf_pages": args.pdf_pages, "payload_files": len(payload),
             "missing_team_fields": status["missing_fields"], "remote_configured": remote_configured,
+            "repository": repository,
             "mp4_status": "missing", "official_submission": "not_performed_by_packager"}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--date", default="20261110", help="材料日期 YYYYMMDD；默认 20261110")
+    parser.add_argument("--date", default="20261111", help="材料日期 YYYYMMDD；默认 20261111")
     parser.add_argument("--output-root", type=Path, default=ROOT / "deliverables", help="项目内部的绝对输出目录")
     parser.add_argument("--pdf-pages", type=int, required=True, help="已渲染核验的实际 PDF 页数，1-30")
     parser.add_argument("--implementation-commit", default="587391d", help="应用实现基线；默认 587391d")
+    parser.add_argument("--repository-verified-commit", type=full_commit_sha, help="已从上述真实仓库读取并核验的完整 40 位 SHA；仍会核对 origin 和祖先关系")
+    parser.add_argument("--repository-public-read-verified", action="store_true", help="调用者已匿名读取并核验上述远端 SHA；必须同时提供 --repository-verified-commit")
     args = parser.parse_args()
+    if args.repository_public_read_verified and not args.repository_verified_commit:
+        parser.error("--repository-public-read-verified 必须与 --repository-verified-commit 一同使用。")
     try:
         result = create_package(args)
     except (PackageError, OSError, UnicodeError, ValueError, zipfile.BadZipFile) as exc:
