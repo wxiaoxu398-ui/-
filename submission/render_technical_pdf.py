@@ -2,6 +2,7 @@
 import argparse
 import json
 import re
+from datetime import date
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -61,10 +62,11 @@ def architecture():
 
 
 class TechnicalDoc(BaseDocTemplate):
-    def __init__(self, filename):
+    def __init__(self, filename, material_date, team_name):
+        self.material_date = material_date
         super().__init__(filename, pagesize=A4, leftMargin=MARGIN, rightMargin=MARGIN,
                          topMargin=49, bottomMargin=45, title='MedRAG 医学教材智能问答助手 - 技术文档',
-                         author='MedRAG 项目团队（实名待补）')
+                         author=(team_name or 'MedRAG 项目团队'))
         frame = Frame(MARGIN, 45, WIDTH, PAGE_H - 94, leftPadding=0, rightPadding=0,
                       topPadding=0, bottomPadding=0, id='content')
         self.addPageTemplates(PageTemplate(id='report', frames=frame, onPage=self.decorate))
@@ -78,7 +80,7 @@ class TechnicalDoc(BaseDocTemplate):
         canvas.setFont('YaHei', 7.6)
         canvas.setFillColor(MUTED)
         canvas.drawString(MARGIN, PAGE_H - 25, 'MedRAG / 医学教材智能问答助手')
-        canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 25, '技术文档 · 2026-11-10')
+        canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 25, '技术文档 · ' + self.material_date)
         canvas.line(MARGIN, 33, PAGE_W - MARGIN, 33)
         canvas.drawString(MARGIN, 20, '仅供医学学习参考，不构成医疗建议。')
         canvas.drawRightString(PAGE_W - MARGIN, 20, str(doc.page))
@@ -102,13 +104,16 @@ def main():
     parser.add_argument('--font', default='C:/Windows/Fonts/msyh.ttc')
     parser.add_argument('--bold-font', default='C:/Windows/Fonts/msyhbd.ttc')
     parser.add_argument('--screenshots-dir', type=Path, default=ROOT / '.local')
+    parser.add_argument('--implementation-commit', default='b8c593f', help='Application runtime baseline commit.')
+    parser.add_argument('--date', default='2026-11-11', help='Material update date, YYYY-MM-DD.')
     args = parser.parse_args()
+    date.fromisoformat(args.date)
     pdfmetrics.registerFont(TTFont('YaHei', args.font, subfontIndex=0))
     pdfmetrics.registerFont(TTFont('YaHeiBold', args.bold_font, subfontIndex=0))
     pdfmetrics.registerFontFamily('YaHei', normal='YaHei', bold='YaHeiBold', italic='YaHei', boldItalic='YaHeiBold')
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle('BodyCN', fontName='YaHei', fontSize=10, leading=17, textColor=INK,
-                              wordWrap='CJK', spaceAfter=7, allowWidows=0, allowOrphans=0))
+    styles.add(ParagraphStyle('BodyCN', fontName='YaHei', fontSize=10, leading=16.5, textColor=INK,
+                              wordWrap='CJK', spaceAfter=6, allowWidows=0, allowOrphans=0))
     styles.add(ParagraphStyle('Chapter', parent=styles['BodyCN'], fontName='YaHeiBold', fontSize=16,
                               leading=24, textColor=GREEN, spaceBefore=19, spaceAfter=10, keepWithNext=True))
     styles.add(ParagraphStyle('SectionCN', parent=styles['BodyCN'], fontName='YaHeiBold', fontSize=12,
@@ -139,17 +144,22 @@ def main():
         ]))
         return result
 
-    team_path = ROOT / 'submission/team-info.json'
+    team_path = ROOT / 'submission/team-profile.json'
+    if not team_path.exists():
+        team_path = ROOT / 'submission/team-info.json'
     if not team_path.exists():
         team_path = ROOT / 'submission/team-info.example.json'
     team = json.loads(team_path.read_text(encoding='utf-8'))
     story += [Spacer(1, 58), p('MedRAG', 'CoverBrand'), p('医学教材智能问答助手', 'CoverTitle'),
-              p('技术文档 / 参赛材料核对版', 'SectionCN'),
+              p('技术文档 / 参赛提交版', 'SectionCN'),
               p('让问题回到教材，让结论可以核对。'), Spacer(1, 25),
-              table([['信息', '记录'], ['文档日期', '2026-11-10'], ['应用实现基线', '587391d'],
-                     ['团队名称', team.get('team_name') or '待团队填写'], ['学校 / 组别', (team.get('school') or '待填写') + ' / ' + (team.get('competition_group') or '待填写')],
-                     ['仓库与归档版本', '具体评审仓库待填写；归档提交号见材料包清单。']]), Spacer(1, 25),
-              p('提交前须补齐真实团队信息并终审；文中区分检索命中、引用格式和语义准确性，不将尚未完成人工核验的结果写为准确率。', 'CaptionCN'), PageBreak()]
+              table([['信息', '记录'], ['文档日期', args.date], ['运行实现基线', args.implementation_commit],
+                     ['团队名称', team.get('team_name') or '待团队填写'], ['学校 / 组别', (team.get('school') or '待填写') + ' / ' + (team.get('competition_group') or team.get('group') or '待填写')],
+                     ['团队成员', '、'.join(member.get('name', '') for member in team.get('members', []) if member.get('name')) or '待填写'],
+                     ['指导老师', '、'.join(item.get('name','') for item in team.get('instructors',[]) if item.get('name')) or '未提供'],
+                     ['项目仓库', (team.get('repository', {}).get('url') if isinstance(team.get('repository'),dict) else team.get('repository')) or '待填写'],
+                     ['归档版本', '见材料包清单及仓库归档提交。']]), Spacer(1, 20),
+              p('文中分别报告检索命中、引用格式和语义准确性，不将尚未完成人工核验的结果写为准确率。', 'CaptionCN'), PageBreak()]
     story.append(p('目录与阅读提示', 'TOCTitle'))
     toc = TableOfContents()
     toc.levelStyles = [ParagraphStyle('TOC0', fontName='YaHei', fontSize=10, leading=18, textColor=GREEN,
@@ -158,7 +168,7 @@ def main():
                                       leftIndent=14, firstLineIndent=0, spaceBefore=1)]
     story += [toc, Spacer(1, 20), p('阅读提示', 'SectionCN'),
               p('本报告描述本地可运行实现，后端绑定回环地址。资料和历史在本机保存，生成时按需调用 DeepSeek。评估结果为 2026-11-10 的有限样本，不构成医学正确性或稳定性能的保证。'),
-              table([['已验证项目', '结果'], ['后端自动化检查', '24 项通过'], ['中文全库评估', '11/11 完成；预期原页命中 7/8；资料外拒答 3/3'], ['引用映射核对', '18 个片段的文件指纹、物理页与原文通过核对'], ['尚待完成', '团队实名、评审仓库、讲解视频、人工语义核验与团队终审']]), PageBreak()]
+              table([['已验证项目', '结果'], ['后端自动化检查', '39 项通过（2026-11-11）；旧学习评测保留原日期'], ['中文全库评估', '11/11 完成；预期原页命中 7/8；资料外拒答 3/3'], ['引用映射核对', '18 个片段的文件指纹、物理页与原文通过核对'], ['团队已确认', 'Tom / 重庆科技大学 B组；指导老师黎泽伦，成员职责详见正文。'], ['后续事项', '视频及仓库状态见材料包清单；人工语义核验、实体电脑复测和官网提交按待办核对。']]), PageBreak()]
 
     lines = args.source.read_text(encoding='utf-8').splitlines()
     index, heading_count = 0, 0
@@ -228,7 +238,7 @@ def main():
             w, h = source_image.size
         story.append(KeepTogether([Image(str(path), width=width, height=width * h / w), p(caption, 'CaptionCN')]))
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    TechnicalDoc(str(args.output)).multiBuild(story)
+    TechnicalDoc(str(args.output), args.date, team.get('team_name', '')).multiBuild(story)
     pages = len(PdfReader(args.output).pages)
     if not 1 <= pages <= 30:
         raise ValueError('Technical PDF page count must be between 1 and 30.')

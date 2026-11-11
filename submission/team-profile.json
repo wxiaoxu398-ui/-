@@ -1,0 +1,43 @@
+{
+  "project_name": "MedRAG",
+  "team_name": "Tom",
+  "school": "重庆科技大学",
+  "group": "B组",
+  "instructors": [
+    {
+      "name": "黎泽伦"
+    }
+  ],
+  "members": [
+    {
+      "name": "王传旭",
+      "division": "产品统筹、前端交互、演示"
+    },
+    {
+      "name": "谢玥",
+      "division": "RAG 后端、API 与索引、启动运行"
+    },
+    {
+      "name": "蒋佳慧",
+      "division": "测试、资料许可与原页核验、文档视频整理"
+    }
+  ],
+  "division_status": "按队伍负责人授权确定，作为协作与交付安排，不作为已完成个人贡献证明或成员签名",
+  "repository": {
+    "platform": "GitHub",
+    "url": "https://github.com/wxiaoxu398-ui/-"
+  },
+  "information_source": "队名、学校、组别、成员、指导老师和仓库地址由用户明确提供；报名页未独立核验",
+  "material_updated_on": "2026-11-11",
+  "runtime_source_commit": "b8c593ffb239729d6f1f1df4da326da8b2582cc9",
+  "ai_evaluation_baseline": "587391d",
+  "ai_evaluation_recorded_on": "2026-11-10",
+  "archive_commit_and_repository_status": "以最终 PACKAGE-MANIFEST 为准",
+  "competition_group": "B组",
+  "division_assignment": {
+    "status": "confirmed_by_user_delegation",
+    "authority": "按队伍负责人本次授权确定",
+    "confirmed_on": "2026-11-11"
+  },
+  "team_review": {}
+}

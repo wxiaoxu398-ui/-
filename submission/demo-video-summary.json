@@ -1,0 +1,27 @@
+{
+  "recorded_on": "2026-11-11",
+  "runtime_application_commit": "b8c593ffb239729d6f1f1df4da326da8b2582cc9",
+  "file_name": "MedRAG-演示视频.mp4",
+  "sha256": "c56a7cb20aad239bc056226b3af247a0855440459beb4e4a5faefd53cccffc85",
+  "duration_seconds": 432.23,
+  "width": 1920,
+  "height": 1080,
+  "video_codec": "h264",
+  "pixel_format": "yuv420p",
+  "audio_codec": "aac",
+  "narration": {
+    "language": "zh-CN",
+    "type": "synthetic_mandarin",
+    "synthetic": true,
+    "voice": "Microsoft Huihui Desktop",
+    "speech_present": true,
+    "disclosure": "配音为 Microsoft Huihui Desktop 普通话语音合成；视频画面为独立公开资料库的真实浏览器操作。"
+  },
+  "capture_type": "actual_browser_interaction",
+  "scenes": 8,
+  "content": "真实问答、引用原页、知识梳理、自测、拒答、停止、刷新恢复、笔记导出、评估单题与导出、架构边界",
+  "api_condition": "开发机本机已有配置；独立公开资料演示库；交付运行ZIP不携带该密钥",
+  "human_semantic_judgments_recorded": 0,
+  "official_submission_completed": false,
+  "distribution": "成片与字幕在交付包03-演示视频目录，视频核验JSON保留实际操作日志"
+}

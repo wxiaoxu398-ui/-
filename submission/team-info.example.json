@@ -43,29 +43,10 @@
     "team_id": "",
     "verification_status": "仅在本机填写真实报名参考信息"
   },
-  "team_name_proposal": {
-    "value": "医知有据",
-    "status": "建议名称，待团队确认；不是已核实的报名队名"
+  "division_assignment": {
+    "status": "",
+    "authority": "",
+    "confirmed_on": ""
   },
-  "division_proposal": {
-    "status": "参考分工，待团队确认；不是实名名单或已完成贡献声明",
-    "members": [
-      {
-        "label": "成员A（待实名）",
-        "role": "产品与前端交互",
-        "responsibilities": "需求和学习流程、Vue / Pinia 页面、学习模式与引用面板、窄屏体验、功能演示与录屏讲解"
-      },
-      {
-        "label": "成员B（待实名）",
-        "role": "RAG 与后端",
-        "responsibilities": "PDF 解析分块、BGE / BM25 / RRF 检索、DeepSeek 与 SSE、会话持久化、引用约束和拒答处理"
-      },
-      {
-        "label": "成员C（待实名）",
-        "role": "测试、资料与文档",
-        "responsibilities": "资料来源和许可核对、逐题原页与结论复核、评估记录、README 与技术 PDF、视频剪辑和材料一致性"
-      }
-    ],
-    "small_team_note": "可由1-3人兼任；两人时测试和文档共同复核，单人时承担三类职责。"
-  }
+  "template_note": "空结构模板；本项目正式公开队伍资料见 submission/team-profile.json。"
 }

@@ -1,0 +1,310 @@
+{
+  "audit_date": "2026-11-11",
+  "audit_completed_utc": "2026-11-11T06:37:20.374643+00:00",
+  "method": "Read-only ZIP directory and selected-entry inspection; no full extraction and no packaged code execution. Actual .env configuration fields were not opened, parsed or displayed; the standard CRC test consumed member byte streams only.",
+  "archive": {
+    "path": "MedRAG-Review-20261111.zip",
+    "bytes": 1245508990,
+    "sha256": "0beb2dd312cd39bba8f87cf6210c354ff8cfab5fc7abdaf836cfba5822a8fad6",
+    "sidecar_path": "MedRAG-Review-20261111.zip.sha256",
+    "sidecar_expected_sha256": "0beb2dd312cd39bba8f87cf6210c354ff8cfab5fc7abdaf836cfba5822a8fad6",
+    "sidecar_matches": true,
+    "file_entries": 37097,
+    "uncompressed_bytes": 2161177226,
+    "crc_testzip": "passed_all_members",
+    "first_bad_member": null,
+    "unsafe_paths": [],
+    "duplicate_names": 0,
+    "encrypted_members": 0,
+    "archive_rewritten": false
+  },
+  "source": {
+    "expected_commit": "b8c593ffb239729d6f1f1df4da326da8b2582cc9",
+    "manifest_source_commit": "b8c593ffb239729d6f1f1df4da326da8b2582cc9",
+    "commit_matches": true,
+    "matching_tracked_files": 104,
+    "missing_tracked_files": [],
+    "different_tracked_files": [],
+    "manifest_sources_from_committed_revision": true,
+    "manifest_source_worktree_changes": true,
+    "note": "Worktree changes were reported at packaging time, but all 104 tracked source files independently match the declared commit."
+  },
+  "asset_checks": {
+    "frontend": [
+      {
+        "path": "assets/EvaluationPanel-D1sr7LUK.js",
+        "expected_sha256": "3d836b0aea9d921643c9f1da390c2d73f9feeb19cd9390c01044454429c7a4f1",
+        "actual_sha256": "3d836b0aea9d921643c9f1da390c2d73f9feeb19cd9390c01044454429c7a4f1",
+        "matches": true
+      },
+      {
+        "path": "assets/index-BkElkEBr.css",
+        "expected_sha256": "b91223591be13853f10c011f99d597825738205f419c451edb500896a0c94639",
+        "actual_sha256": "b91223591be13853f10c011f99d597825738205f419c451edb500896a0c94639",
+        "matches": true
+      },
+      {
+        "path": "assets/index-Dlc5otkY.js",
+        "expected_sha256": "c594faa47489e79806f513c2e04b96fd30031ad12e92cac07493ccdcb7969cc1",
+        "actual_sha256": "c594faa47489e79806f513c2e04b96fd30031ad12e92cac07493ccdcb7969cc1",
+        "matches": true
+      },
+      {
+        "path": "assets/markdown-D65kzDb7.js",
+        "expected_sha256": "3c276fc3c349067caf3a54a02c780e088f14a1b2fc4cbd48ddce91e9bf8c8b5b",
+        "actual_sha256": "3c276fc3c349067caf3a54a02c780e088f14a1b2fc4cbd48ddce91e9bf8c8b5b",
+        "matches": true
+      },
+      {
+        "path": "assets/ProjectPanel-B8hjngA6.js",
+        "expected_sha256": "c7ebf58b81c55b708be76a13e494120212fb70e372e75faeaba9fc3cf1c0e377",
+        "actual_sha256": "c7ebf58b81c55b708be76a13e494120212fb70e372e75faeaba9fc3cf1c0e377",
+        "matches": true
+      },
+      {
+        "path": "assets/ui-BGgHv0YC.js",
+        "expected_sha256": "db344c9fe57de8f660f05022163ff92f6cbef4f814d401d4acfea1a535b23233",
+        "actual_sha256": "db344c9fe57de8f660f05022163ff92f6cbef4f814d401d4acfea1a535b23233",
+        "matches": true
+      },
+      {
+        "path": "index.html",
+        "expected_sha256": "395d0ebcf0927c14007e6c4183a4a4796c3603aafc6567136c834be8d610a7e0",
+        "actual_sha256": "395d0ebcf0927c14007e6c4183a4a4796c3603aafc6567136c834be8d610a7e0",
+        "matches": true
+      }
+    ],
+    "vector_seed": [
+      {
+        "path": "244ab810-c064-49a7-a6aa-ff8e3c1aab66/data_level0.bin",
+        "expected_sha256": "d47fef791e4d841b8b0927e1938a965cab725732e2c00c9c9b3a5fac5b844bec",
+        "actual_sha256": "d47fef791e4d841b8b0927e1938a965cab725732e2c00c9c9b3a5fac5b844bec",
+        "matches": true
+      },
+      {
+        "path": "244ab810-c064-49a7-a6aa-ff8e3c1aab66/header.bin",
+        "expected_sha256": "6d7fc2a136b854921c6b47b6980c46559b28ada3c7cc3424fd62e2daf5f8b9b2",
+        "actual_sha256": "6d7fc2a136b854921c6b47b6980c46559b28ada3c7cc3424fd62e2daf5f8b9b2",
+        "matches": true
+      },
+      {
+        "path": "244ab810-c064-49a7-a6aa-ff8e3c1aab66/index_metadata.pickle",
+        "expected_sha256": "9a3ec82790084c3a3c667dd7bd5606e63d3c8d56e59f0026cfd706448e1cbb64",
+        "actual_sha256": "9a3ec82790084c3a3c667dd7bd5606e63d3c8d56e59f0026cfd706448e1cbb64",
+        "matches": true
+      },
+      {
+        "path": "244ab810-c064-49a7-a6aa-ff8e3c1aab66/length.bin",
+        "expected_sha256": "db62197ff218d32c6aa3520c82e581f91511647c4caf1138b4aec9143b9cbf26",
+        "actual_sha256": "db62197ff218d32c6aa3520c82e581f91511647c4caf1138b4aec9143b9cbf26",
+        "matches": true
+      },
+      {
+        "path": "244ab810-c064-49a7-a6aa-ff8e3c1aab66/link_lists.bin",
+        "expected_sha256": "406a16a63473b58ccb2a03b7726bd5ed88b3489958238eab77ff018922e05984",
+        "actual_sha256": "406a16a63473b58ccb2a03b7726bd5ed88b3489958238eab77ff018922e05984",
+        "matches": true
+      },
+      {
+        "path": "2a49fe9e-973d-45e3-8e8b-16386e50a60f/data_level0.bin",
+        "expected_sha256": "9d36e83d8491a8a049b379efa2bbccebb0dfdf2c57491ee9d2308812e7845160",
+        "actual_sha256": "9d36e83d8491a8a049b379efa2bbccebb0dfdf2c57491ee9d2308812e7845160",
+        "matches": true
+      },
+      {
+        "path": "2a49fe9e-973d-45e3-8e8b-16386e50a60f/header.bin",
+        "expected_sha256": "342f2b398d815f49c74f17e63f58480cbfccbf94eb1fc567db280f79ff79bec0",
+        "actual_sha256": "342f2b398d815f49c74f17e63f58480cbfccbf94eb1fc567db280f79ff79bec0",
+        "matches": true
+      },
+      {
+        "path": "2a49fe9e-973d-45e3-8e8b-16386e50a60f/index_metadata.pickle",
+        "expected_sha256": "5f4bceea253a7ddeb0e271e6a552b56615de256ce95d00b811a987f52c464e9b",
+        "actual_sha256": "5f4bceea253a7ddeb0e271e6a552b56615de256ce95d00b811a987f52c464e9b",
+        "matches": true
+      },
+      {
+        "path": "2a49fe9e-973d-45e3-8e8b-16386e50a60f/length.bin",
+        "expected_sha256": "e8d17befdc8c42b2951e64ca09b0bdec9ace5048ff0af47ce51e51c4bdf9c24d",
+        "actual_sha256": "e8d17befdc8c42b2951e64ca09b0bdec9ace5048ff0af47ce51e51c4bdf9c24d",
+        "matches": true
+      },
+      {
+        "path": "2a49fe9e-973d-45e3-8e8b-16386e50a60f/link_lists.bin",
+        "expected_sha256": "a03e247223cdce02c6574594cdc4d1933c4e9637307cb2b2e293b6a29509256f",
+        "actual_sha256": "a03e247223cdce02c6574594cdc4d1933c4e9637307cb2b2e293b6a29509256f",
+        "matches": true
+      },
+      {
+        "path": "chroma.sqlite3",
+        "expected_sha256": "d9bd875c1c745b2be763e3a1f777100abc61f779d3d22f026085b9498b5b356a",
+        "actual_sha256": "d9bd875c1c745b2be763e3a1f777100abc61f779d3d22f026085b9498b5b356a",
+        "matches": true
+      }
+    ],
+    "books": [
+      {
+        "file_name": "nursingfundamentals.pdf",
+        "expected_sha256": "49743bf7d5a83fdf484bdf0d08fd2066fe3b1a431eb5cedf2571548387c3b2a0",
+        "actual_sha256": "49743bf7d5a83fdf484bdf0d08fd2066fe3b1a431eb5cedf2571548387c3b2a0",
+        "matches": true,
+        "title": "Nursing Fundamentals 2e",
+        "pages": 1499,
+        "license": "CC BY 4.0, except where otherwise noted",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "source_url": "https://www.ncbi.nlm.nih.gov/books/NBK610815/"
+      },
+      {
+        "file_name": "nursingskills.pdf",
+        "expected_sha256": "2ca73a22527f9326d074d006e56992abca75659f4da776f031eed38d751b8cbd",
+        "actual_sha256": "2ca73a22527f9326d074d006e56992abca75659f4da776f031eed38d751b8cbd",
+        "matches": true,
+        "title": "Nursing Skills 2e",
+        "pages": 1432,
+        "license": "CC BY 4.0, except where otherwise noted",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "source_url": "https://www.ncbi.nlm.nih.gov/books/NBK596735/"
+      },
+      {
+        "file_name": "pharmacology2e.pdf",
+        "expected_sha256": "31a25bfc83a21292dcd8d49410b352edb7625b175a49a00f10dd19fc3e995b1e",
+        "actual_sha256": "31a25bfc83a21292dcd8d49410b352edb7625b175a49a00f10dd19fc3e995b1e",
+        "matches": true,
+        "title": "Nursing Pharmacology 2e",
+        "pages": 965,
+        "license": "CC BY 4.0, except where otherwise noted",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "source_url": "https://www.ncbi.nlm.nih.gov/books/NBK595000/"
+      },
+      {
+        "file_name": "who-lab-biosafety-zh.pdf",
+        "expected_sha256": "922ae5de84d21335ec1d20d1c1937f140573657a61ffdf05a434010b1c9f7d0e",
+        "actual_sha256": "922ae5de84d21335ec1d20d1c1937f140573657a61ffdf05a434010b1c9f7d0e",
+        "matches": true,
+        "title": "实验室生物安全手册（第四版·中文）",
+        "pages": 102,
+        "license": "CC BY-NC-SA 3.0 IGO；第三方材料另按原书说明",
+        "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo/",
+        "source_url": "https://iris.who.int/handle/10665/372979"
+      },
+      {
+        "file_name": "who-ppe-zh.pdf",
+        "expected_sha256": "0d5ada6ddffee23a162a92dc7f89945d0a82fd19a236691a2543837a42a5f061",
+        "actual_sha256": "0d5ada6ddffee23a162a92dc7f89945d0a82fd19a236691a2543837a42a5f061",
+        "matches": true,
+        "title": "个人防护装备（实验室生物安全·中文）",
+        "pages": 82,
+        "license": "CC BY-NC-SA 3.0 IGO；第三方材料另按原书说明",
+        "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo/",
+        "source_url": "https://iris.who.int/handle/10665/372900"
+      },
+      {
+        "file_name": "who-risk-assessment-zh.pdf",
+        "expected_sha256": "95b3a8eb64d866f65e9dd45d6efbb4291d9197a20a72703a99fc15741a5f8808",
+        "actual_sha256": "95b3a8eb64d866f65e9dd45d6efbb4291d9197a20a72703a99fc15741a5f8808",
+        "matches": true,
+        "title": "风险评估（实验室生物安全·中文）",
+        "pages": 122,
+        "license": "CC BY-NC-SA 3.0 IGO；第三方材料另按原书说明",
+        "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo/",
+        "source_url": "https://iris.who.int/handle/10665/372970"
+      },
+      {
+        "file_name": "who-stress-guide-zh.pdf",
+        "expected_sha256": "6f33dedd82c48369bd2567b4821ae77414062e29774ef976cd67e9661e91dc68",
+        "actual_sha256": "6f33dedd82c48369bd2567b4821ae77414062e29774ef976cd67e9661e91dc68",
+        "matches": true,
+        "title": "压力之下，择要事为之：图解指南（中文）",
+        "pages": 133,
+        "license": "中文译本 CC BY-NC-SA 3.0；英文原版 CC BY-NC-SA 3.0 IGO",
+        "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+        "source_url": "https://iris.who.int/handle/10665/331901"
+      }
+    ]
+  },
+  "privacy": {
+    "seeded_database_counts": {
+      "document": 7,
+      "chunk": 13711,
+      "conversation": 0,
+      "message": 0,
+      "feedback": 0
+    },
+    "seeded_database_integrity_check": "ok",
+    "database_read_method": "SQLite deserialized into memory only; WAL header format flags adjusted in the memory copy for read-only inspection. The archive database was unchanged.",
+    "original_journal_header_versions": [
+      2,
+      2
+    ],
+    "actual_env_fields_inspected": false,
+    "actual_env_member_bytes": 515,
+    "public_env_template_bytes": 499,
+    "env_metadata_size_equal": false,
+    "env_metadata_crc_equal": false,
+    "public_env_template_key_is_empty": true,
+    "generator_code_observation": "Committed packaging code writes backend/.env from the committed empty backend/.env.example and rejects a non-empty template key; actual .env values were not inspected.",
+    "manifest_actual_user_env_copied": false,
+    "manifest_personal_database_copied": false,
+    "credential_filename_candidates": [],
+    "private_registration_references_in_report": false
+  },
+  "licenses": {
+    "license_or_notice_files_found": 278,
+    "python_license_present": true,
+    "model_card_license_declarations": [
+      "license: mit"
+    ],
+    "book_license_evidence": "Seven original PDF SHA-256 values match the committed source/license manifests; see asset_checks.books.",
+    "limitation": "This is an inventory/fingerprint check, not an independent legal compliance certification for every third-party component."
+  },
+  "packaged_verification_record": {
+    "path": "runtime/verification.json",
+    "record": {
+      "project_id": "03b44ccee8fd5932",
+      "documents_ready": 7,
+      "chunks": 13711,
+      "assets": 4,
+      "textbook_question": "cited excerpt verified",
+      "pdf_original_page": "PNG verified",
+      "out_of_corpus": "refused",
+      "personal_history": "empty after disposable checks",
+      "external_http_during_startup": false,
+      "checked_on": "2026-11-11",
+      "isolated_tests_passed": 39,
+      "windows_powershell": "5.1",
+      "original_cold_start_seconds": 31.16,
+      "review_first_cold_start_seconds": 139.31,
+      "review_second_cold_start_seconds": 35.62,
+      "node_path_available": false,
+      "external_proxy_unavailable": true,
+      "ascii_missing_vector_directory_restore": "passed",
+      "native_vector_query": "passed",
+      "real_windows_reboot_performed": false,
+      "another_physical_pc_tested": false
+    },
+    "provenance": "Record supplied inside the user-provided runtime package; this ZIP audit did not rerun Windows startup or network isolation tests."
+  },
+  "current_task_root_test_record": {
+    "tests_passed": 39,
+    "duration_seconds": 5.76,
+    "provenance": "Root agent reported a fresh run in the materials merge worktree during this task; not executed by this read-only audit."
+  },
+  "manifest_consistency": {
+    "declared_count_excluding_manifest": 37098,
+    "actual_zip_count_excluding_manifest": 37096,
+    "count_delta_declared_minus_actual": 2,
+    "declared_bytes_excluding_manifest": 2168454230,
+    "actual_zip_bytes_excluding_manifest": 2161174350,
+    "byte_delta_declared_minus_actual": 7279880,
+    "matches_final_zip": false,
+    "cause": "Not determined by this audit. The discrepancy is recorded without rewriting the user-provided runtime ZIP."
+  },
+  "not_verified_by_this_audit": [
+    "A real Windows reboot",
+    "A second physical computer",
+    "Online DeepSeek generation using a reviewer-supplied key",
+    "Formal MP4 video quality or submission status",
+    "Whole third-party legal compliance"
+  ],
+  "material_status_scope": "Operational video status is unchanged by this audit. Team role allocation is finalized by the root per user instruction, not marked pending here."
+}
